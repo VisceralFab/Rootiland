@@ -1,0 +1,19 @@
+Routiland Leafy 3D Assets
+========================
+
+Put up to five artist-supplied models into this folder:
+
+island_level1.usdz  -> floating island without a plant
+island_level2.usdz  -> island with small sprout
+island_level3.usdz  -> island with young tree
+island_level4.usdz  -> island with tree and unfinished bench
+island_level5.usdz  -> island with tree and finished bench
+
+Because "Models" is included as a blue folder reference in the Xcode project,
+new USDZ files placed here will be copied into the app bundle automatically.
+
+Models can have different original dimensions. IslandRealityView normalizes each
+model to a maximum dimension of 2.2 RealityKit units, then centers the model.
+Avoid extreme 3D geometry and unnecessary textures on mobile.
+
+Until these files exist, RealityKit renders a procedural placeholder island.

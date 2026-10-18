@@ -1,0 +1,388 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		084B76CAF8FEEBBA18835CBA /* HabitTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E6C39D4CB58664F0AD1DD5 /* HabitTimelineView.swift */; };
+		0DEC95231406ECFEB93E1A56 /* IslandRealityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7362CBB6BD74B4D38F2BD6 /* IslandRealityView.swift */; };
+		28A43996432FEF2613AD6526 /* RoutilandStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */; };
+		2EB170BFA312F2360D35636A /* TopicsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205439C57558E0044C24F70D /* TopicsView.swift */; };
+		30E04E9353D066EFA98DD0AA /* Models in Resources */ = {isa = PBXBuildFile; fileRef = 9E153C04B70C08955BDB115B /* Models */; };
+		31814D8E72C2F54CBF4AD425 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51073E1165BFFAB6B49E4A4C /* MainTabView.swift */; };
+		3E76C211A0E969F1B5F383B2 /* HabitRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E464D395D0FA33A640030EF /* HabitRow.swift */; };
+		51C12895CDE8AE41CC9BE9D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 943C1AA5F38E3653322B9255 /* Assets.xcassets */; };
+		5696BE6BFE1C4E1C7AFF056B /* DesignComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05209304E76C258CEE49A0EE /* DesignComponents.swift */; };
+		58CDAAD731CDAE21507E361B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E946551BFB02749F29A1E91D /* ContentView.swift */; };
+		5E2B4C70757B11D46D0952F3 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5E3C28056BB5B610B33F38 /* NotificationService.swift */; };
+		688186D8A09BC90DCE290105 /* HabitEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72BE0E46A528CAD4C7EEE83E /* HabitEditorView.swift */; };
+		792FD79BBC5C3FC5A308379D /* RoutilandApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */; };
+		8D5C1F549C3819BE0A3590C6 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7D3A3DD213453286F5A2BC /* Habit.swift */; };
+		8DC20939C83B606B5DFCC929 /* TrackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F09C1BED8424F724FAFD09 /* TrackView.swift */; };
+		93E6631166A76B7E5C999512 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89046620BB070BB47984395 /* SettingsView.swift */; };
+		D97D48788B93A8494EA4CF65 /* LeafyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FA47CB6843EF34ACB346BC /* LeafyView.swift */; };
+		FF117275B6B380E957504E8A /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB75A7133CA8B08095CC34A /* OnboardingView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		05209304E76C258CEE49A0EE /* DesignComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignComponents.swift; sourceTree = "<group>"; };
+		0EB75A7133CA8B08095CC34A /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		205439C57558E0044C24F70D /* TopicsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicsView.swift; sourceTree = "<group>"; };
+		29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutilandApp.swift; sourceTree = "<group>"; };
+		3C5E3C28056BB5B610B33F38 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutilandStore.swift; sourceTree = "<group>"; };
+		51073E1165BFFAB6B49E4A4C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		6BCC6278425727A11607891B /* Routiland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Routiland.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C7D3A3DD213453286F5A2BC /* Habit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
+		72BE0E46A528CAD4C7EEE83E /* HabitEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEditorView.swift; sourceTree = "<group>"; };
+		8E464D395D0FA33A640030EF /* HabitRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitRow.swift; sourceTree = "<group>"; };
+		943C1AA5F38E3653322B9255 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9E153C04B70C08955BDB115B /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Models; sourceTree = "<group>"; };
+		C0FA47CB6843EF34ACB346BC /* LeafyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeafyView.swift; sourceTree = "<group>"; };
+		D89046620BB070BB47984395 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E946551BFB02749F29A1E91D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F2E6C39D4CB58664F0AD1DD5 /* HabitTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitTimelineView.swift; sourceTree = "<group>"; };
+		F5F09C1BED8424F724FAFD09 /* TrackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackView.swift; sourceTree = "<group>"; };
+		FD7362CBB6BD74B4D38F2BD6 /* IslandRealityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandRealityView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4D5002FCD66F4BD9D2D0EE8B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0AC80366F051D3622055250B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E946551BFB02749F29A1E91D /* ContentView.swift */,
+				29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		0BC57856351BADFFF0A1CEB7 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				05209304E76C258CEE49A0EE /* DesignComponents.swift */,
+				72BE0E46A528CAD4C7EEE83E /* HabitEditorView.swift */,
+				8E464D395D0FA33A640030EF /* HabitRow.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		1D946CEDC3C61C2A0857150B /* Routiland */ = {
+			isa = PBXGroup;
+			children = (
+				0AC80366F051D3622055250B /* App */,
+				466A355FEF47368C831B22BC /* Models */,
+				D05D234B1935550A09174819 /* ViewModels */,
+				E773C369DA6C5F40A9A26250 /* Views */,
+				A2E70E98D31FCA611E139412 /* Reality */,
+				87CBEEC512EF2784A2C2A738 /* Services */,
+				36581D5C146CF4CE2FF8052E /* Resources */,
+				75322D33DCAA3DCB6C6A348A /* Preview Content */,
+				943C1AA5F38E3653322B9255 /* Assets.xcassets */,
+			);
+			path = Routiland;
+			sourceTree = "<group>";
+		};
+		27376E0C7D98A85EF39644D5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6BCC6278425727A11607891B /* Routiland.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		36581D5C146CF4CE2FF8052E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9E153C04B70C08955BDB115B /* Models */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		465B9B3685C41528F2A1424A = {
+			isa = PBXGroup;
+			children = (
+				1D946CEDC3C61C2A0857150B /* Routiland */,
+				27376E0C7D98A85EF39644D5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		466A355FEF47368C831B22BC /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6C7D3A3DD213453286F5A2BC /* Habit.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		75322D33DCAA3DCB6C6A348A /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		87CBEEC512EF2784A2C2A738 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				3C5E3C28056BB5B610B33F38 /* NotificationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A2E70E98D31FCA611E139412 /* Reality */ = {
+			isa = PBXGroup;
+			children = (
+				FD7362CBB6BD74B4D38F2BD6 /* IslandRealityView.swift */,
+			);
+			path = Reality;
+			sourceTree = "<group>";
+		};
+		D05D234B1935550A09174819 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		E773C369DA6C5F40A9A26250 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F9B6CCAF909F174224A20ECD /* Onboarding */,
+				0BC57856351BADFFF0A1CEB7 /* Shared */,
+				F95B136F812C052419373D40 /* Tabs */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		F95B136F812C052419373D40 /* Tabs */ = {
+			isa = PBXGroup;
+			children = (
+				F2E6C39D4CB58664F0AD1DD5 /* HabitTimelineView.swift */,
+				C0FA47CB6843EF34ACB346BC /* LeafyView.swift */,
+				51073E1165BFFAB6B49E4A4C /* MainTabView.swift */,
+				D89046620BB070BB47984395 /* SettingsView.swift */,
+				205439C57558E0044C24F70D /* TopicsView.swift */,
+				F5F09C1BED8424F724FAFD09 /* TrackView.swift */,
+			);
+			path = Tabs;
+			sourceTree = "<group>";
+		};
+		F9B6CCAF909F174224A20ECD /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				0EB75A7133CA8B08095CC34A /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B9D5A5F26AD5956BC96088B2 /* Routiland */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7810233849ED0697EA028F9 /* Build configuration list for PBXNativeTarget "Routiland" */;
+			buildPhases = (
+				36EBA78DE322E4EC50E94730 /* Sources */,
+				4D5002FCD66F4BD9D2D0EE8B /* Frameworks */,
+				6B879CCDC186B52C1C638864 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Routiland;
+			productName = Routiland;
+			productReference = 6BCC6278425727A11607891B /* Routiland.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		72DACC5E3F2D78518D0AFA6D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					B9D5A5F26AD5956BC96088B2 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = C6A90BBDAB5647F0B4F217EA /* Build configuration list for PBXProject "Routiland" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 465B9B3685C41528F2A1424A;
+			productRefGroup = 27376E0C7D98A85EF39644D5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B9D5A5F26AD5956BC96088B2 /* Routiland */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6B879CCDC186B52C1C638864 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				51C12895CDE8AE41CC9BE9D5 /* Assets.xcassets in Resources */,
+				30E04E9353D066EFA98DD0AA /* Models in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		36EBA78DE322E4EC50E94730 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				58CDAAD731CDAE21507E361B /* ContentView.swift in Sources */,
+				792FD79BBC5C3FC5A308379D /* RoutilandApp.swift in Sources */,
+				8D5C1F549C3819BE0A3590C6 /* Habit.swift in Sources */,
+				28A43996432FEF2613AD6526 /* RoutilandStore.swift in Sources */,
+				FF117275B6B380E957504E8A /* OnboardingView.swift in Sources */,
+				5696BE6BFE1C4E1C7AFF056B /* DesignComponents.swift in Sources */,
+				688186D8A09BC90DCE290105 /* HabitEditorView.swift in Sources */,
+				3E76C211A0E969F1B5F383B2 /* HabitRow.swift in Sources */,
+				084B76CAF8FEEBBA18835CBA /* HabitTimelineView.swift in Sources */,
+				D97D48788B93A8494EA4CF65 /* LeafyView.swift in Sources */,
+				31814D8E72C2F54CBF4AD425 /* MainTabView.swift in Sources */,
+				93E6631166A76B7E5C999512 /* SettingsView.swift in Sources */,
+				2EB170BFA312F2360D35636A /* TopicsView.swift in Sources */,
+				8DC20939C83B606B5DFCC929 /* TrackView.swift in Sources */,
+				0DEC95231406ECFEB93E1A56 /* IslandRealityView.swift in Sources */,
+				5E2B4C70757B11D46D0952F3 /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		00D93E3DB0658C1CBC2ABCFC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8U8G9Z52A7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Routiland;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.routiland.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2F610D72F2FD9C2D7286736E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		6F18CDDCF7CAADBA4B423BF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8U8G9Z52A7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Routiland;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.routiland.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		713D5912BF76B3BACD690A36 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C6A90BBDAB5647F0B4F217EA /* Build configuration list for PBXProject "Routiland" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				713D5912BF76B3BACD690A36 /* Debug */,
+				2F610D72F2FD9C2D7286736E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E7810233849ED0697EA028F9 /* Build configuration list for PBXNativeTarget "Routiland" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F18CDDCF7CAADBA4B423BF9 /* Debug */,
+				00D93E3DB0658C1CBC2ABCFC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 72DACC5E3F2D78518D0AFA6D /* Project object */;
+}
