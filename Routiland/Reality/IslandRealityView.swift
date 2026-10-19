@@ -1,6 +1,7 @@
 import SwiftUI
 import RealityKit
 import UIKit
+import ImageIO
 
 // MARK: - Leafy 3D Island
 // Loads the current USDZ island and supports drag-to-rotate and pinch-to-zoom.
@@ -30,14 +31,26 @@ struct IslandRealityView: View {
             camera.look(at: SIMD3<Float>(0, 0.0, 0), from: camera.position, relativeTo: nil)
             scene.addChild(camera)
 
-            let light = DirectionalLight()
-            light.light.intensity = 18000
-            light.position = SIMD3<Float>(-2, 4, 3)
-            light.look(at: .zero, from: light.position, relativeTo: nil)
-            scene.addChild(light)
-
             let scalableRoot = Entity()
             scalableRoot.name = "ScalableIslandRoot"
+
+            // The HDRI sky lights the island and drives its reflections. The light entity sits
+            // outside the rotating root, so reflections stay fixed to the sky as the island turns.
+            if let environment = await IslandSkyEnvironment.load() {
+                let skyLight = Entity()
+                skyLight.name = "SkyLight"
+                skyLight.components.set(ImageBasedLightComponent(source: .single(environment),
+                                                                 intensityExponent: IslandSkyEnvironment.intensityExponent))
+                scene.addChild(skyLight)
+                scalableRoot.components.set(ImageBasedLightReceiverComponent(imageBasedLight: skyLight))
+            } else {
+                // Without the HDRI, fall back to a single key light.
+                let light = DirectionalLight()
+                light.light.intensity = 18000
+                light.position = SIMD3<Float>(-2, 4, 3)
+                light.look(at: .zero, from: light.position, relativeTo: nil)
+                scene.addChild(light)
+            }
 
             if let assetURL = Bundle.main.url(forResource: modelName, withExtension: "usdz", subdirectory: "Models"),
                let model = try? await Entity(contentsOf: assetURL) {
@@ -105,6 +118,33 @@ struct IslandRealityView: View {
             entity.scale = SIMD3<Float>(repeating: factor)
             entity.position = -box.center * factor
         }
+    }
+}
+
+// MARK: - HDRI Sky Lighting
+// Poly Haven "Kloofendal 48d Partly Cloudy (Pure Sky)", 2K, CC0 licence.
+// Converting the HDR into lighting textures takes a moment, so the result is
+// cached and shared by the Leafy preview and the full-screen island.
+@MainActor
+private enum IslandSkyEnvironment {
+    static let fileName = "kloofendal_48d_partly_cloudy_puresky_2k"
+    // Brightness on a log2 scale: 0 uses the HDR as-is, +1 doubles it, -1 halves it.
+    static let intensityExponent: Float = 0
+
+    private static var cached: EnvironmentResource?
+
+    static func load() async -> EnvironmentResource? {
+        if let cached { return cached }
+        // ShouldAllowFloat keeps the HDR's full brightness range instead of clamping it to 8-bit.
+        let options = [kCGImageSourceShouldAllowFloat: true] as CFDictionary
+        guard let url = Bundle.main.url(forResource: fileName, withExtension: "hdr", subdirectory: "Models"),
+              let source = CGImageSourceCreateWithURL(url as CFURL, options),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, options),
+              let environment = try? await EnvironmentResource(equirectangular: image, withName: fileName) else {
+            return nil
+        }
+        cached = environment
+        return environment
     }
 }
 

@@ -36,6 +36,17 @@ enum HabitCategory: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    // Each topic has its own color so habits are easy to tell apart on the
+    // Timeline and on the topic cards. It stays the same whatever the accent theme.
+    var color: Color {
+        switch self {
+        case .movement: Color(red: 0.49, green: 0.71, blue: 0.36)
+        case .wellbeing: Color(red: 0.55, green: 0.24, blue: 0.38)
+        case .growth: Color(red: 0.93, green: 0.53, blue: 0.48)
+        case .study: Color(red: 0.34, green: 0.47, blue: 0.62)
+        }
+    }
+
     var suggestions: [ActivitySuggestion] {
         switch self {
         case .movement:
@@ -65,9 +76,10 @@ struct ActivitySuggestion: Identifiable {
 }
 
 // MARK: - Habit Frequency
-// The first prototype uses the day the habit was created as its weekly/monthly reminder day.
+// Weekly and monthly habits repeat on the weekday / day of the month they were created.
+// Custom habits happen only on the calendar days the user picked.
 enum HabitFrequency: String, Codable, CaseIterable, Identifiable {
-    case daily, weekly, monthly
+    case daily, weekly, monthly, custom
     var id: String { rawValue }
 
     var title: String {
@@ -75,8 +87,13 @@ enum HabitFrequency: String, Codable, CaseIterable, Identifiable {
         case .daily: "Every day"
         case .weekly: "Once a week"
         case .monthly: "Once a month"
+        case .custom: "Specific days"
         }
     }
+
+    // The choices that repeat on their own; onboarding offers only these.
+    static let repeatingCases: [HabitFrequency] = [.daily, .weekly, .monthly]
+    var repeats: Bool { self != .custom }
 }
 
 // MARK: - Habit Model
@@ -91,15 +108,73 @@ struct Habit: Identifiable, Codable {
     var reminderMinute: Int
     var createdAt = Date()
     var completedDays: [String] = []
+    // Day keys chosen in the calendar; only used when `frequency` is `.custom`.
+    var customDays: [String] = []
 
     func isCompleted(on date: Date) -> Bool {
         completedDays.contains(Self.dayKey(for: date))
+    }
+
+    // Whether the habit is due on the given calendar day.
+    func isScheduled(on date: Date) -> Bool {
+        let calendar = Calendar.current
+        let day = calendar.startOfDay(for: date)
+        let creationDay = calendar.startOfDay(for: createdAt)
+        switch frequency {
+        case .daily:
+            return day >= creationDay
+        case .weekly:
+            return day >= creationDay
+                && calendar.component(.weekday, from: day) == calendar.component(.weekday, from: creationDay)
+        case .monthly:
+            return day >= creationDay
+                && calendar.component(.day, from: day) == calendar.component(.day, from: creationDay)
+        case .custom:
+            return customDays.contains(Self.dayKey(for: day))
+        }
     }
 
     // A stable local calendar key avoids double-counting taps within the same day.
     static func dayKey(for date: Date) -> String {
         let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
+    // Turns a "yyyy-MM-dd" day key back into the start of that local day.
+    static func date(fromDayKey key: String) -> Date? {
+        let parts = key.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return Calendar.current.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    }
+
+    // "45 min", "1 h", "1 h 30 min"
+    static func durationText(_ minutes: Int) -> String {
+        guard minutes >= 60 else { return "\(minutes) min" }
+        let hours = minutes / 60
+        return minutes % 60 == 0 ? "\(hours) h" : "\(hours) h \(minutes % 60) min"
+    }
+}
+
+// Habits saved before `customDays` existed have no such key; decode it as empty
+// instead of failing, so upgrading never loses the user's habits.
+extension Habit {
+    private enum CodingKeys: String, CodingKey {
+        case id, category, title, durationMinutes, frequency, reminderHour, reminderMinute
+        case createdAt, completedDays, customDays
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        category = try container.decode(HabitCategory.self, forKey: .category)
+        title = try container.decode(String.self, forKey: .title)
+        durationMinutes = try container.decode(Int.self, forKey: .durationMinutes)
+        frequency = try container.decode(HabitFrequency.self, forKey: .frequency)
+        reminderHour = try container.decode(Int.self, forKey: .reminderHour)
+        reminderMinute = try container.decode(Int.self, forKey: .reminderMinute)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        completedDays = try container.decodeIfPresent([String].self, forKey: .completedDays) ?? []
+        customDays = try container.decodeIfPresent([String].self, forKey: .customDays) ?? []
     }
 }
 
@@ -110,11 +185,12 @@ enum AccentTheme: String, CaseIterable, Codable, Identifiable {
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
 
+    // A slightly lighter spectrum: each original brand color blended about 18% toward white.
     var color: Color {
         switch self {
-        case .green: Color(red: 109 / 255, green: 212 / 255, blue: 0)
-        case .pink: Color(red: 230 / 255, green: 136 / 255, blue: 203 / 255)
-        case .blue: Color(red: 0, green: 136 / 255, blue: 1)
+        case .green: Color(red: 135 / 255, green: 220 / 255, blue: 46 / 255)
+        case .pink: Color(red: 235 / 255, green: 157 / 255, blue: 212 / 255)
+        case .blue: Color(red: 46 / 255, green: 157 / 255, blue: 1)
         }
     }
 }

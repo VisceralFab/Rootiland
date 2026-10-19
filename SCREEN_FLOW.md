@@ -1,4 +1,4 @@
-# Screen flow — Routiland prototype
+# Screen flow — Rootiland prototype
 
 All screen artwork was supplied as SVG except the Timeline PNG. The file names below refer to files inside `DesignReferences/`. A separate designer-written instructions file was **not present** in the uploaded ZIP. Navigation and behaviors below are therefore interpreted from the visible mockups and the previous requirements.
 

@@ -3,7 +3,11 @@ import UIKit
 
 // MARK: - Design Tokens
 // Shared colors and reusable controls keep all screens visually consistent.
-enum RoutilandDesign {
+enum RootilandDesign {
+    // English with a 24-hour clock (British English uses 24h). Applied to the whole app,
+    // so every time picker and formatted time shows 00:00–23:59.
+    static let locale = Locale(identifier: "en_GB")
+
     // The app uses a true black canvas in dark mode to feel closer
     // to Apple's Clock app. In light mode we use a soft grouped background.
     static func canvas(darkMode: Bool) -> Color {
@@ -29,13 +33,14 @@ struct AccentHeading: View {
             Text(firstLine).foregroundStyle(.primary)
             Text(highlightedLine).foregroundStyle(Color.accentColor)
         }
-        .font(.system(size: 22, weight: .bold, design: .rounded))
+        // A text style rather than a fixed size, so headings grow with the user's text size.
+        .font(.system(.title2, design: .rounded).weight(.bold))
         .multilineTextAlignment(.center)
         .accessibilityElement(children: .combine)
     }
 }
 
-struct RoutilandPrimaryButton: View {
+struct RootilandPrimaryButton: View {
     let title: String
     var action: () -> Void
 
@@ -51,7 +56,7 @@ struct RoutilandPrimaryButton: View {
     }
 }
 
-struct RoutilandOptionRow: View {
+struct RootilandOptionRow: View {
     let title: String
     let symbol: String
     let selected: Bool
@@ -127,27 +132,144 @@ struct BundleResourceImage: View {
 }
 
 #Preview("Option") {
-    RoutilandOptionRow(title: "30 minutes", symbol: "timer", selected: true, action: {})
+    RootilandOptionRow(title: "30 minutes", symbol: "timer", selected: true, action: {})
         .padding()
 }
 
-// A system glass action placed inside the bottom safe area, above the tab bar.
-struct AddHabitAction: View {
-    let action: () -> Void
+// MARK: - Duration Wheel
+// The hours-and-minutes wheel from the Clock app's Timer. SwiftUI has no countdown
+// picker, so this wraps UIKit's UIDatePicker in `.countDownTimer` mode.
+struct DurationWheelPicker: UIViewRepresentable {
+    @Binding var minutes: Int
+
+    func makeUIView(context: Context) -> UIDatePicker {
+        let picker = UIDatePicker()
+        picker.datePickerMode = .countDownTimer
+        picker.minuteInterval = 1
+        picker.locale = RootilandDesign.locale
+        picker.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        picker.addTarget(context.coordinator, action: #selector(Coordinator.valueChanged(_:)), for: .valueChanged)
+        // UIKit skips the first change event unless the duration is set after the
+        // picker is on screen, so set it on the next main-actor turn.
+        let seconds = TimeInterval(max(1, minutes) * 60)
+        Task { @MainActor in picker.countDownDuration = seconds }
+        return picker
+    }
+
+    func updateUIView(_ picker: UIDatePicker, context: Context) {
+        context.coordinator.minutes = $minutes
+        let seconds = TimeInterval(max(1, minutes) * 60)
+        if picker.countDownDuration != seconds {
+            picker.countDownDuration = seconds
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(minutes: $minutes) }
+
+    final class Coordinator: NSObject {
+        var minutes: Binding<Int>
+
+        init(minutes: Binding<Int>) { self.minutes = minutes }
+
+        // The wheel can't go below one minute, matching the Clock app.
+        @objc func valueChanged(_ picker: UIDatePicker) {
+            minutes.wrappedValue = max(1, Int(picker.countDownDuration / 60))
+        }
+    }
+}
+
+// MARK: - Daylight Palette
+// Colors the day's timeline line like the sky: sunrise gold in the morning, warming to
+// orange and sunset coral, then darkening through dusk plum to night indigo. It is the
+// same for every accent theme.
+enum DaylightPalette {
+    private static let stops: [(minute: Double, red: Double, green: Double, blue: Double)] = [
+        (5 * 60, 1.00, 0.82, 0.32),   // Sunrise gold
+        (10 * 60, 1.00, 0.66, 0.24),  // Morning orange
+        (14 * 60, 0.97, 0.50, 0.29),  // Afternoon amber
+        (18 * 60, 0.86, 0.33, 0.39),  // Sunset coral
+        (20 * 60, 0.53, 0.29, 0.54),  // Dusk plum
+        (23 * 60, 0.22, 0.24, 0.48)   // Night indigo
+    ]
+
+    // The sky color at a minute of the day (0–1440). Before sunrise the line still
+    // starts gold, so every day begins with the sun.
+    static func color(atMinute minute: Double) -> Color {
+        guard let first = stops.first, let last = stops.last else { return .orange }
+        if minute <= first.minute { return Color(red: first.red, green: first.green, blue: first.blue) }
+        if minute >= last.minute { return Color(red: last.red, green: last.green, blue: last.blue) }
+        guard let index = stops.firstIndex(where: { $0.minute >= minute }), index > 0 else {
+            return Color(red: first.red, green: first.green, blue: first.blue)
+        }
+        let a = stops[index - 1]
+        let b = stops[index]
+        let t = (minute - a.minute) / (b.minute - a.minute)
+        return Color(red: a.red + (b.red - a.red) * t,
+                     green: a.green + (b.green - a.green) * t,
+                     blue: a.blue + (b.blue - a.blue) * t)
+    }
+
+    // Gradient stops spanning a stretch of the day, sampled so long stretches show
+    // every color they pass through.
+    static func stops(fromMinute start: Double, toMinute end: Double, samples: Int = 6) -> [Gradient.Stop] {
+        guard end > start else { return [Gradient.Stop(color: color(atMinute: start), location: 0)] }
+        return (0...samples).map { step in
+            let fraction = Double(step) / Double(samples)
+            return Gradient.Stop(color: color(atMinute: start + (end - start) * fraction), location: fraction)
+        }
+    }
+
+    static func minute(of date: Date) -> Double {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return Double((parts.hour ?? 0) * 60 + (parts.minute ?? 0))
+    }
+}
+
+// MARK: - Confetti Burst
+// A small ring of confetti that pops out of a checkbox when a habit is completed.
+// Increment `trigger` to play it once.
+struct ConfettiBurst: View {
+    let trigger: Int
+    // How far the pieces travel beyond the checkbox, in points.
+    var spread: CGFloat = 22
+    var colors: [Color] = [.yellow, .orange, .pink, .mint, .purple, .blue]
+    private let pieceCount = 12
 
     var body: some View {
-        HStack {
-            Spacer()
-            Button(action: action) {
-                Image(systemName: "plus")
-                    .font(.title2.weight(.semibold))
-                    .frame(width: 44, height: 44)
+        // Copied out because the animator's content closure isn't main-actor isolated.
+        let count = pieceCount
+        let colors = colors
+        let spread = spread
+
+        Color.clear
+            .frame(width: 1, height: 1)
+            // At rest the progress is 0, which draws nothing.
+            .keyframeAnimator(initialValue: 0.0, trigger: trigger) { content, progress in
+                ZStack {
+                    content
+                    ForEach(0..<count, id: \.self) { index in
+                        Self.piece(index, count: count, color: colors[index % colors.count],
+                                   spread: spread, progress: progress)
+                    }
+                }
+            } keyframes: { _ in
+                LinearKeyframe(1.0, duration: 0.65, timingCurve: .easeOut)
             }
-            .buttonStyle(.glassProminent)
-            .buttonBorderShape(.circle)
-            .accessibilityLabel("Add habit")
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+
+    // Each piece flies outward along its own angle, spinning and fading as it goes.
+    private nonisolated static func piece(_ index: Int, count: Int, color: Color,
+                                          spread: CGFloat, progress: Double) -> some View {
+        let angle = Double(index) / Double(count) * 2 * .pi
+        let distance = 12 + spread * progress
+        return RoundedRectangle(cornerRadius: 1)
+            .fill(color)
+            .frame(width: 4, height: index.isMultiple(of: 2) ? 8 : 4)
+            .rotationEffect(.radians(angle + progress * 3))
+            .scaleEffect(1 - progress * 0.4)
+            .offset(x: cos(angle) * distance, y: sin(angle) * distance)
+            .opacity(progress == 0 ? 0 : 1 - progress)
     }
 }

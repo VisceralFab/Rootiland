@@ -2,16 +2,12 @@ import SwiftUI
 
 // MARK: - Leafy Tab
 struct LeafyView: View {
-    @EnvironmentObject private var store: RoutilandStore
+    @EnvironmentObject private var store: RootilandStore
     @State private var showingIsland = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                Text("Leafy")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.black)
-
                 VStack(spacing: 12) {
                     islandPreview
                         .contentShape(Rectangle())
@@ -24,7 +20,7 @@ struct LeafyView: View {
                         Label("Level \(store.leafyLevel)", systemImage: "leaf.fill")
                             .font(.headline)
                         Spacer()
-                        Text(store.leafyLevel == 5 ? "Fully grown" : "\(store.checkInsToNextLevel) check-ins to grow")
+                        Text(store.isLeafyFullyGrown ? "Fully grown" : daysToGrowText)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -42,16 +38,17 @@ struct LeafyView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Label(store.leafyLevel == 5 ? "Quest complete" : "Next quest", systemImage: store.leafyLevel == 5 ? "checkmark.seal.fill" : "sparkles")
+                    Label(store.isLeafyFullyGrown ? "Quest complete" : "Next quest",
+                          systemImage: store.isLeafyFullyGrown ? "checkmark.seal.fill" : "sparkles")
                         .font(.headline)
                         .foregroundStyle(store.accentTheme.color)
-                    Text(store.leafyLevel == 5
+                    Text(store.isLeafyFullyGrown
                          ? "Leafy has reached the maximum level!"
                          : "Reach level \(store.leafyLevel + 1) to unlock new decorations for Leafy!")
                         .font(.title3.bold())
-                    Text(store.leafyLevel == 5
+                    Text(store.isLeafyFullyGrown
                          ? "Keep completing your habits and caring for your island."
-                         : "Complete your habits: \(store.checkInsToNextLevel) more check-ins to the next level.")
+                         : "Complete all of a day's habits to count it. \(store.completedDayCount) of \(RootilandStore.daysNeededForLevel[store.leafyLevel]) days done.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ProgressView(value: store.levelProgress)
@@ -59,16 +56,21 @@ struct LeafyView: View {
                 }
                 .padding(18)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoutilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 22))
+                .background(RootilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 22))
             }
             .padding(20)
         }
-        .background(RoutilandDesign.canvas(darkMode: store.darkMode))
+        .background(RootilandDesign.canvas(darkMode: store.darkMode))
+        // The system large title replaces the old hard-coded header and adapts to dark mode.
         .navigationTitle("Leafy")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .fullScreenCover(isPresented: $showingIsland) {
             LeafyIslandFullScreenView()
         }
+    }
+
+    private var daysToGrowText: String {
+        store.daysToNextLevel == 1 ? "1 day to grow" : "\(store.daysToNextLevel) days to grow"
     }
 
     @ViewBuilder
@@ -83,7 +85,7 @@ struct LeafyView: View {
 }
 
 private struct LeafyIslandFullScreenView: View {
-    @EnvironmentObject private var store: RoutilandStore
+    @EnvironmentObject private var store: RootilandStore
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -94,7 +96,7 @@ private struct LeafyIslandFullScreenView: View {
                 height: geometry.size.height
             )
             .frame(width: geometry.size.width, height: geometry.size.height)
-            .background(RoutilandDesign.canvas(darkMode: store.darkMode))
+            .background(RootilandDesign.canvas(darkMode: store.darkMode))
         }
         .ignoresSafeArea()
         .safeAreaInset(edge: .top, alignment: .leading, spacing: 0) {
@@ -115,5 +117,5 @@ private struct LeafyIslandFullScreenView: View {
 }
 
 #Preview {
-    NavigationStack { LeafyView().environmentObject(RoutilandStore()) }
+    NavigationStack { LeafyView().environmentObject(RootilandStore()) }
 }

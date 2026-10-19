@@ -5,7 +5,7 @@ import Combine
 // One shared object stores the user's habits and settings across all five tabs.
 // UserDefaults is sufficient for this initial, offline-only prototype.
 @MainActor
-final class RoutilandStore: ObservableObject {
+final class RootilandStore: ObservableObject {
     @Published var habits: [Habit] = [] {
         didSet {
             guard !isLoading else { return }
@@ -74,9 +74,45 @@ final class RoutilandStore: ObservableObject {
         }
     }
 
+    func updateHabit(_ habit: Habit) {
+        guard let index = habits.firstIndex(where: { $0.id == habit.id }) else { return }
+        // Clear the old reminders first: days removed from a custom schedule must stop firing.
+        NotificationService.remove(for: habits[index])
+        habits[index] = habit
+        if notificationsEnabled {
+            Task { await NotificationService.schedule(habit) }
+        }
+    }
+
     func deleteHabit(_ habit: Habit) {
         habits.removeAll { $0.id == habit.id }
         NotificationService.remove(for: habit)
+    }
+
+    // MARK: - Notification Permission
+    // Reminders are switched on and off in the iPhone's Settings app, so the app simply
+    // mirrors the system permission.
+
+    /// Shows the system permission prompt; used the first time, before Settings has an entry for the app.
+    func enableNotifications() async -> Bool {
+        let allowed = await NotificationService.requestPermission()
+        notificationsEnabled = allowed
+        if allowed { await NotificationService.scheduleAll(habits) }
+        return allowed
+    }
+
+    // Permission can change in the Settings app at any time, so this runs whenever the app becomes active.
+    func syncNotificationPermission() async {
+        let authorized = await NotificationService.isAuthorized()
+        if authorized != notificationsEnabled {
+            notificationsEnabled = authorized
+        }
+        if authorized {
+            // Also tops up custom-day reminders, which are only queued a few days ahead.
+            await NotificationService.scheduleAll(habits)
+        } else {
+            NotificationService.removeAll(for: habits)
+        }
     }
 
     func toggleCompletion(_ habit: Habit, on date: Date = .now) {
@@ -91,52 +127,53 @@ final class RoutilandStore: ObservableObject {
     }
 
     private func recordCompletedDay(on date: Date) {
-        let calendar = Calendar.current
-        let day = calendar.startOfDay(for: date)
-        let activeHabits = habits.filter { calendar.startOfDay(for: $0.createdAt) <= day }
+        // Only the habits due that day count, so weekly and specific-day habits
+        // never stand in the way on their days off.
+        let dueHabits = habits.filter { $0.isScheduled(on: date) }
         let key = Habit.dayKey(for: date)
         // A day is earned once, at 100%. Later edits never revoke that achievement.
         guard !fullyCompletedDays.contains(key),
-              !activeHabits.isEmpty,
-              activeHabits.allSatisfy({ $0.isCompleted(on: date) }) else { return }
+              !dueHabits.isEmpty,
+              dueHabits.allSatisfy({ $0.isCompleted(on: date) }) else { return }
         fullyCompletedDays.insert(key)
         defaults.set(fullyCompletedDays.sorted(), forKey: "fullyCompletedDays")
     }
 
-    // Today's incomplete checklist keeps yesterday's streak alive until midnight.
-    // Calendar arithmetic handles month/year boundaries and daylight-saving changes.
-    func currentStreak(asOf date: Date = .now) -> Int {
-        let calendar = Calendar.current
-        var day = calendar.startOfDay(for: date)
-        if !fullyCompletedDays.contains(Habit.dayKey(for: day)) {
-            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: day) else { return 0 }
-            day = yesterday
-        }
-        var count = 0
-        while fullyCompletedDays.contains(Habit.dayKey(for: day)) {
-            count += 1
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-            day = previous
-        }
-        return count
-    }
-
-    var totalCompletions: Int { habits.reduce(0) { $0 + $1.completedDays.count } }
-    var completedToday: Int { habits.filter { $0.isCompleted(on: .now) }.count }
+    // The habits due today, in the order they were added.
+    var todaysHabits: [Habit] { habits.filter { $0.isScheduled(on: .now) } }
+    var completedToday: Int { todaysHabits.filter { $0.isCompleted(on: .now) }.count }
+    var isTodayComplete: Bool { fullyCompletedDays.contains(Habit.dayKey(for: .now)) }
 
     // MARK: - Leafy Progression
-    // Prototype balancing: 3 check-ins unlock each level; maximum level is 5.
-    // Change these numbers here when the game progression has been finalized.
-    private let checkInsPerLevel = 3
-    var leafyLevel: Int { min(5, totalCompletions / checkInsPerLevel + 1) }
-    var levelProgress: Double {
-        leafyLevel == 5 ? 1 : Double(totalCompletions % checkInsPerLevel) / Double(checkInsPerLevel)
+    // Leafy grows with completed days: days on which every habit due was checked off.
+    // The days don't need to be in a row, and a completed day is never taken away.
+    // Each entry is the total number of completed days needed to reach that level
+    // (index 0 is level 1). Change the numbers here to rebalance the game.
+    static let daysNeededForLevel = [0, 3, 5, 8, 12]
+    static var maxLeafyLevel: Int { daysNeededForLevel.count }
+
+    var completedDayCount: Int { fullyCompletedDays.count }
+
+    var leafyLevel: Int {
+        (Self.daysNeededForLevel.lastIndex { completedDayCount >= $0 } ?? 0) + 1
     }
-    var checkInsToNextLevel: Int {
-        leafyLevel == 5 ? 0 : checkInsPerLevel - totalCompletions % checkInsPerLevel
+
+    var isLeafyFullyGrown: Bool { leafyLevel == Self.maxLeafyLevel }
+
+    // Progress from the current level's threshold to the next one, from 0 to 1.
+    var levelProgress: Double {
+        guard !isLeafyFullyGrown else { return 1 }
+        let current = Self.daysNeededForLevel[leafyLevel - 1]
+        let next = Self.daysNeededForLevel[leafyLevel]
+        return Double(completedDayCount - current) / Double(next - current)
+    }
+
+    var daysToNextLevel: Int {
+        guard !isLeafyFullyGrown else { return 0 }
+        return Self.daysNeededForLevel[leafyLevel] - completedDayCount
     }
 
     func durationLabel(_ minutes: Int) -> String {
-        return "\(minutes) min"
+        Habit.durationText(minutes)
     }
 }

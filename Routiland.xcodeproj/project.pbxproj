@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		084B76CAF8FEEBBA18835CBA /* HabitTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E6C39D4CB58664F0AD1DD5 /* HabitTimelineView.swift */; };
 		0DEC95231406ECFEB93E1A56 /* IslandRealityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7362CBB6BD74B4D38F2BD6 /* IslandRealityView.swift */; };
-		28A43996432FEF2613AD6526 /* RoutilandStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */; };
+		28A43996432FEF2613AD6526 /* RootilandStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F93CCB1D5329B4B0083A348 /* RootilandStore.swift */; };
 		2EB170BFA312F2360D35636A /* TopicsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205439C57558E0044C24F70D /* TopicsView.swift */; };
 		30E04E9353D066EFA98DD0AA /* Models in Resources */ = {isa = PBXBuildFile; fileRef = 9E153C04B70C08955BDB115B /* Models */; };
 		31814D8E72C2F54CBF4AD425 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51073E1165BFFAB6B49E4A4C /* MainTabView.swift */; };
@@ -19,7 +19,7 @@
 		58CDAAD731CDAE21507E361B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E946551BFB02749F29A1E91D /* ContentView.swift */; };
 		5E2B4C70757B11D46D0952F3 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5E3C28056BB5B610B33F38 /* NotificationService.swift */; };
 		688186D8A09BC90DCE290105 /* HabitEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72BE0E46A528CAD4C7EEE83E /* HabitEditorView.swift */; };
-		792FD79BBC5C3FC5A308379D /* RoutilandApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */; };
+		792FD79BBC5C3FC5A308379D /* RootilandApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FEE424F43F451AC0C70F43 /* RootilandApp.swift */; };
 		8D5C1F549C3819BE0A3590C6 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7D3A3DD213453286F5A2BC /* Habit.swift */; };
 		8DC20939C83B606B5DFCC929 /* TrackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F09C1BED8424F724FAFD09 /* TrackView.swift */; };
 		93E6631166A76B7E5C999512 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89046620BB070BB47984395 /* SettingsView.swift */; };
@@ -31,10 +31,11 @@
 		05209304E76C258CEE49A0EE /* DesignComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignComponents.swift; sourceTree = "<group>"; };
 		0EB75A7133CA8B08095CC34A /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		205439C57558E0044C24F70D /* TopicsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicsView.swift; sourceTree = "<group>"; };
-		29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutilandApp.swift; sourceTree = "<group>"; };
+		29FEE424F43F451AC0C70F43 /* RootilandApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootilandApp.swift; sourceTree = "<group>"; };
 		3C5E3C28056BB5B610B33F38 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
-		4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutilandStore.swift; sourceTree = "<group>"; };
+		4F93CCB1D5329B4B0083A348 /* RootilandStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootilandStore.swift; sourceTree = "<group>"; };
 		51073E1165BFFAB6B49E4A4C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		519107343086D2E700801109 /* Routiland.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Routiland.xcodeproj; sourceTree = SOURCE_ROOT; };
 		6BCC6278425727A11607891B /* Routiland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Routiland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C7D3A3DD213453286F5A2BC /* Habit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
 		72BE0E46A528CAD4C7EEE83E /* HabitEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEditorView.swift; sourceTree = "<group>"; };
@@ -64,7 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				E946551BFB02749F29A1E91D /* ContentView.swift */,
-				29FEE424F43F451AC0C70F43 /* RoutilandApp.swift */,
+				29FEE424F43F451AC0C70F43 /* RootilandApp.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -114,6 +115,7 @@
 		465B9B3685C41528F2A1424A = {
 			isa = PBXGroup;
 			children = (
+				519107343086D2E700801109 /* Routiland.xcodeproj */,
 				1D946CEDC3C61C2A0857150B /* Routiland */,
 				27376E0C7D98A85EF39644D5 /* Products */,
 			);
@@ -125,6 +127,11 @@
 				6C7D3A3DD213453286F5A2BC /* Habit.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		519107353086D2E700801109 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
 			sourceTree = "<group>";
 		};
 		75322D33DCAA3DCB6C6A348A /* Preview Content */ = {
@@ -153,7 +160,7 @@
 		D05D234B1935550A09174819 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				4F93CCB1D5329B4B0083A348 /* RoutilandStore.swift */,
+				4F93CCB1D5329B4B0083A348 /* RootilandStore.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -234,6 +241,12 @@
 			mainGroup = 465B9B3685C41528F2A1424A;
 			productRefGroup = 27376E0C7D98A85EF39644D5 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 519107353086D2E700801109 /* Products */;
+					ProjectRef = 519107343086D2E700801109 /* Routiland.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				B9D5A5F26AD5956BC96088B2 /* Routiland */,
@@ -259,9 +272,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				58CDAAD731CDAE21507E361B /* ContentView.swift in Sources */,
-				792FD79BBC5C3FC5A308379D /* RoutilandApp.swift in Sources */,
+				792FD79BBC5C3FC5A308379D /* RootilandApp.swift in Sources */,
 				8D5C1F549C3819BE0A3590C6 /* Habit.swift in Sources */,
-				28A43996432FEF2613AD6526 /* RoutilandStore.swift in Sources */,
+				28A43996432FEF2613AD6526 /* RootilandStore.swift in Sources */,
 				FF117275B6B380E957504E8A /* OnboardingView.swift in Sources */,
 				5696BE6BFE1C4E1C7AFF056B /* DesignComponents.swift in Sources */,
 				688186D8A09BC90DCE290105 /* HabitEditorView.swift in Sources */,
@@ -287,13 +300,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8U8G9Z52A7;
+				DEVELOPMENT_TEAM = 4T45FUQH42;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Routiland;
+				INFOPLIST_KEY_CFBundleDisplayName = Rootiland;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.routiland.app;
+				PRODUCT_BUNDLE_IDENTIFIER = org.rootiland.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -327,13 +340,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8U8G9Z52A7;
+				DEVELOPMENT_TEAM = 4T45FUQH42;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Routiland;
+				INFOPLIST_KEY_CFBundleDisplayName = Rootiland;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.routiland.app;
+				PRODUCT_BUNDLE_IDENTIFIER = org.rootiland.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

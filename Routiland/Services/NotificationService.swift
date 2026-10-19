@@ -14,6 +14,18 @@ enum NotificationService {
         }
     }
 
+    // Reads the current system permission without prompting the user.
+    static func authorizationStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
+    static func isAuthorized() async -> Bool {
+        switch await authorizationStatus() {
+        case .authorized, .provisional, .ephemeral: return true
+        default: return false
+        }
+    }
+
     static func scheduleAll(_ habits: [Habit]) async {
         for habit in habits { await schedule(habit) }
     }
@@ -24,11 +36,16 @@ enum NotificationService {
         content.body = "A small step today helps Leafy grow."
         content.sound = .default
 
+        if habit.frequency == .custom {
+            await scheduleCustomDays(habit, content: content)
+            return
+        }
+
         var parts = DateComponents()
         parts.hour = habit.reminderHour
         parts.minute = habit.reminderMinute
         switch habit.frequency {
-        case .daily: break
+        case .daily, .custom: break
         case .weekly:
             parts.weekday = Calendar.current.component(.weekday, from: habit.createdAt)
         case .monthly:
@@ -41,13 +58,41 @@ enum NotificationService {
         try? await UNUserNotificationCenter.current().add(request)
     }
 
+    // Picked days don't follow a pattern, so each upcoming one gets its own one-time reminder.
+    // iOS keeps at most 64 pending reminders per app, so only the next few per habit are queued.
+    private static func scheduleCustomDays(_ habit: Habit, content: UNNotificationContent) async {
+        let calendar = Calendar.current
+        let upcoming = habit.customDays
+            .compactMap(Habit.date(fromDayKey:))
+            .compactMap { calendar.date(bySettingHour: habit.reminderHour, minute: habit.reminderMinute, second: 0, of: $0) }
+            .filter { $0 > .now }
+            .sorted()
+            .prefix(maxRemindersPerCustomHabit)
+
+        for date in upcoming {
+            let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+            let request = UNNotificationRequest(identifier: identifier(for: habit, day: Habit.dayKey(for: date)),
+                                                content: content,
+                                                trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false))
+            try? await UNUserNotificationCenter.current().add(request)
+        }
+    }
+
+    private static let maxRemindersPerCustomHabit = 14
+
     static func remove(for habit: Habit) {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier(for: habit)])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers(for: habit))
     }
 
     static func removeAll(for habits: [Habit]) {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: habits.map(identifier(for:)))
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: habits.flatMap(identifiers(for:)))
     }
 
     private static func identifier(for habit: Habit) -> String { "habit.\(habit.id.uuidString)" }
+    private static func identifier(for habit: Habit, day: String) -> String { "habit.\(habit.id.uuidString).\(day)" }
+
+    // Every reminder a habit may have pending, whatever its frequency.
+    private static func identifiers(for habit: Habit) -> [String] {
+        [identifier(for: habit)] + habit.customDays.map { identifier(for: habit, day: $0) }
+    }
 }

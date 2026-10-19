@@ -1,26 +1,52 @@
 import SwiftUI
 
 // MARK: - Onboarding Flow
-// The screen order mirrors the Sketch exports:
-// Momentum app icon → Onboard 2 → 3 → 4 → 5 → 6 → Final → Notify → Leafy present.
+// Welcome → topic → activity → duration → frequency → time → summary → reminders → Leafy.
+// The first habit is saved only when onboarding finishes, together with the "finished"
+// flag, so quitting halfway through never leaves a duplicate habit behind.
 private enum OnboardingPage: Int, CaseIterable {
     case welcome, category, activity, duration, frequency, time, summary, notifications, leafyIntro
+
+    // The setup steps counted by the progress dots, from choosing a topic to the summary.
+    static let setupSteps: [OnboardingPage] = [.category, .activity, .duration, .frequency, .time, .summary]
 }
 
 struct OnboardingView: View {
-    @EnvironmentObject private var store: RoutilandStore
-    @State private var page: OnboardingPage = .welcome
+    @EnvironmentObject private var store: RootilandStore
+    @State private var page: OnboardingPage
+    // Which way the pages slide.
+    @State private var movingForward = true
+
+    // The habit being set up.
     @State private var category: HabitCategory = .movement
     @State private var selectedActivity = "Walk"
     @State private var minutes = 30
     @State private var frequency: HabitFrequency = .daily
-    @State private var reminderTime = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: .now) ?? .now
+    @State private var customDates: Set<DateComponents> = []
+    @State private var reminderTime = Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: .now) ?? .now
+    // Set the first time the time page appears, after which the user's choice is kept.
+    @State private var hasSuggestedTime = false
+
+    @State private var showingDayPicker = false
     @State private var showCustomActivity = false
     @State private var customActivity = ""
+    @State private var isRequestingPermission = false
+
+    private static let maxActivityLength = 30
+
+    init() {
+        page = .welcome
+    }
+
+    // Lets the previews below open straight on a given page.
+    fileprivate init(startingAt startPage: OnboardingPage) {
+        page = startPage
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            if page != .welcome && page != .summary && page != .notifications && page != .leafyIntro {
+            // Every page after the welcome can go back, including the summary.
+            if page != .welcome {
                 HStack {
                     Button(action: previousPage) {
                         Image(systemName: "chevron.left")
@@ -35,83 +61,123 @@ struct OnboardingView: View {
                 .padding(.top, 16)
             }
 
-            Group {
-                switch page {
-                case .welcome: welcomeContent
-                case .category: categoryContent
-                case .activity: activityContent
-                case .duration: durationContent
-                case .frequency: frequencyContent
-                case .time: timeContent
-                case .summary: summaryContent
-                case .notifications: notificationContent
-                case .leafyIntro: leafyIntroduction
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            pageContainer
+                .id(page)
+                .transition(pageTransition)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(RoutilandDesign.canvas(darkMode: store.darkMode).ignoresSafeArea())
+        .background(RootilandDesign.canvas(darkMode: store.darkMode).ignoresSafeArea())
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // The native bottom action remains tappable above the Home Indicator.
             if page != .notifications {
                 VStack(spacing: 12) {
-                    if [.welcome, .category, .activity, .duration, .frequency, .time].contains(page) {
+                    if OnboardingPage.setupSteps.contains(page) {
                         dots
                     }
-                    RoutilandPrimaryButton(title: buttonTitle) { advance() }
+                    RootilandPrimaryButton(title: buttonTitle) { advance() }
+                        .disabled(!canAdvance)
                 }
                 .padding(.horizontal, 28)
                 .padding(.top, 14)
                 .padding(.bottom, 14)
-                .background(RoutilandDesign.canvas(darkMode: store.darkMode))
+                .background(RootilandDesign.canvas(darkMode: store.darkMode))
             }
         }
-        .animation(.smooth(duration: 0.25), value: page)
-        .alert("New activity", isPresented: $showCustomActivity) {
+        .alert("Custom activity", isPresented: $showCustomActivity) {
             TextField("Activity name", text: $customActivity)
             Button("Cancel", role: .cancel) { customActivity = "" }
-            Button("Add") {
+            Button("Save") {
                 let value = customActivity.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !value.isEmpty { selectedActivity = value }
-                customActivity = "" }
+                customActivity = ""
+            }
         } message: {
-            Text("Give your new habit a short, recognizable name.")
+            Text("Give your habit a short, recognizable name (up to \(Self.maxActivityLength) characters).")
         }
+        // Keeps custom names short enough for every card and row in the app.
+        .onChange(of: customActivity) { _, value in
+            if value.count > Self.maxActivityLength {
+                customActivity = String(value.prefix(Self.maxActivityLength))
+            }
+        }
+        .sheet(isPresented: $showingDayPicker) {
+            HabitDaysSheet(dates: $customDates)
+        }
+    }
+
+    // Pages fill the screen like before, but scroll whenever their content is taller, such as
+    // with large text sizes or on smaller iPhones, so nothing hides behind the bottom button.
+    private var pageContainer: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                pageContent
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    @ViewBuilder
+    private var pageContent: some View {
+        switch page {
+        case .welcome: welcomeContent
+        case .category: categoryContent
+        case .activity: activityContent
+        case .duration: durationContent
+        case .frequency: frequencyContent
+        case .time: timeContent
+        case .summary: summaryContent
+        case .notifications: notificationContent
+        case .leafyIntro: leafyIntroduction
+        }
+    }
+
+    private var pageTransition: AnyTransition {
+        .asymmetric(insertion: .move(edge: movingForward ? .trailing : .leading).combined(with: .opacity),
+                    removal: .move(edge: movingForward ? .leading : .trailing).combined(with: .opacity))
     }
 
     private var buttonTitle: String {
         switch page {
         case .welcome: "Get Started"
-        case .summary: "Finish Setup"
-        case .leafyIntro: "Continue"
+        case .summary: "Looks Good"
+        case .leafyIntro: "Start My Journey"
         default: "Next"
         }
     }
 
+    // "Specific days" needs at least one day picked before moving on.
+    private var canAdvance: Bool {
+        page != .frequency || frequency != .custom || !customDates.isEmpty
+    }
+
     private var dots: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<6, id: \.self) { index in
+        let steps = OnboardingPage.setupSteps
+        let current = steps.firstIndex(of: page) ?? 0
+        return HStack(spacing: 6) {
+            ForEach(0..<steps.count, id: \.self) { index in
                 Circle()
-                    .fill(index == min(page.rawValue, 5) ? Color.accentColor : Color.secondary.opacity(0.35))
+                    .fill(index == current ? Color.accentColor : Color.secondary.opacity(0.35))
                     .frame(width: 6, height: 6)
             }
         }
-        .accessibilityLabel("Step \(min(page.rawValue + 1, 6)) of 6")
+        .accessibilityElement()
+        .accessibilityLabel("Step \(current + 1) of \(steps.count)")
     }
+
+    // MARK: Pages
 
     private var welcomeContent: some View {
         VStack(spacing: 22) {
             Spacer()
-            AccentHeading(firstLine: "Build habits", highlightedLine: "In Routiland.")
+            AccentHeading(firstLine: "Build habits", highlightedLine: "In Rootiland.")
             Spacer()
             BundleResourceImage(name: "flower-mascot")
                 .frame(width: 148, height: 148)
-                .accessibilityLabel("Routiland flower mascot")
+                .accessibilityLabel("Rootiland flower mascot")
             Spacer()
-            Text("Turn small actions into habits.\nTrack your progress, stay focused,\nand keep moving forward.")
-                .font(.system(.headline, design: .rounded))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.primary)
+            bodyText("Turn small actions into habits. Track your progress, stay focused, and keep moving forward.",
+                     font: .system(.headline, design: .rounded))
             Spacer(minLength: 20)
         }
         .padding(.horizontal, 24)
@@ -124,10 +190,7 @@ struct OnboardingView: View {
             Spacer(minLength: 20)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 22) {
                 ForEach(HabitCategory.allCases) { item in
-                    Button {
-                        category = item
-                        selectedActivity = item.suggestions[0].title
-                    } label: {
+                    Button { selectCategory(item) } label: {
                         VStack(alignment: .leading, spacing: 14) {
                             Image(systemName: item.symbol)
                                 .font(.title2)
@@ -157,28 +220,34 @@ struct OnboardingView: View {
                 }
             }
             Spacer(minLength: 15)
-            Text("Choose a category.\nYou can explore more areas later.")
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .multilineTextAlignment(.center)
+            bodyText("Choose a topic. You can explore more areas later.",
+                     font: .system(.subheadline, design: .rounded).weight(.semibold))
             Spacer(minLength: 8)
         }
         .padding(.horizontal, 28)
     }
 
     private var activityContent: some View {
-        choicePage(first: "Start with one small", second: "Habit", subtitle: category.title,
-                   description: "Choose the activity you would\nlike to do regularly.") {
+        // Topics are named by their short title everywhere in onboarding.
+        choicePage(first: "Start with one small", second: "Habit", subtitle: category.shortTitle,
+                   description: "Choose the activity you would like to do regularly.") {
             VStack(spacing: 18) {
                 ForEach(category.suggestions) { suggestion in
-                    RoutilandOptionRow(title: suggestion.title, symbol: suggestion.symbol,
+                    RootilandOptionRow(title: suggestion.title, symbol: suggestion.symbol,
                                        selected: selectedActivity == suggestion.title) {
                         selectedActivity = suggestion.title
                     }
                 }
-                if !category.suggestions.contains(where: { $0.title == selectedActivity }) {
-                    RoutilandOptionRow(title: selectedActivity, symbol: "star", selected: true, action: {})
+                if !isSuggestion(selectedActivity) {
+                    // The custom activity can be tapped to rename it; picking a suggestion replaces it.
+                    RootilandOptionRow(title: selectedActivity, symbol: "pencil", selected: true) {
+                        customActivity = selectedActivity
+                        showCustomActivity = true
+                    }
+                    .accessibilityHint("Rename your custom activity")
                 }
                 Button {
+                    customActivity = ""
                     showCustomActivity = true
                 } label: {
                     Label("Custom activity", systemImage: "plus.circle.fill")
@@ -190,36 +259,55 @@ struct OnboardingView: View {
     }
 
     private var durationContent: some View {
+        // The same hours-and-minutes wheel as the habit editor (and the Clock app's Timer).
         choicePage(first: "Make it fit your", second: "Routine", subtitle: selectedActivity,
-                   description: "A pace you can keep is better\nthan a perfect plan.") {
-            VStack(spacing: 18) {
-                ForEach([30, 45, 60], id: \.self) { choice in
-                    RoutilandOptionRow(title: choice == 60 ? "1 hour" : "\(choice) minutes",
-                                       symbol: "timer", selected: minutes == choice) {
-                        minutes = choice
-                    }
-                }
+                   description: "A pace you can keep is better than a perfect plan.") {
+            VStack(spacing: 8) {
+                Text(Habit.durationText(minutes))
+                    .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Color.accentColor)
+                DurationWheelPicker(minutes: $minutes)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel("Duration")
+                    .accessibilityValue(Habit.durationText(minutes))
             }
         }
     }
 
     private var frequencyContent: some View {
-        choicePage(first: "Make it fit your", second: "Calendar", subtitle: "How many times?",
-                   description: "Consistency is what transforms\naverage into excellence.") {
-            VStack(spacing: 18) {
+        choicePage(first: "Make it fit your", second: "Calendar", subtitle: "How often?",
+                   description: "Consistency is what transforms average into excellence.") {
+            VStack(spacing: 14) {
                 ForEach(HabitFrequency.allCases) { choice in
-                    RoutilandOptionRow(title: choice.title, symbol: "calendar", selected: frequency == choice) {
+                    RootilandOptionRow(title: choice.title,
+                                       symbol: choice == .custom ? "calendar.badge.plus" : "calendar",
+                                       selected: frequency == choice) {
                         frequency = choice
+                        // Open the calendar straight away the first time "Specific days" is picked.
+                        if choice == .custom && customDates.isEmpty { showingDayPicker = true }
                     }
                 }
+                if frequency == .custom {
+                    Button { showingDayPicker = true } label: {
+                        Label(customDaysSummary, systemImage: "calendar")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .accessibilityHint("Opens a calendar to choose the days")
+                }
+                // Says exactly when the habit repeats, including the day weekly and monthly use.
+                Text(frequencyDetail)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 320)
             }
         }
     }
 
     private var timeContent: some View {
         VStack(spacing: 24) {
-            AccentHeading(firstLine: "Make it fit your", highlightedLine: "Daily")
-            Text("Precisely when?")
+            AccentHeading(firstLine: "When should we", highlightedLine: "Remind you?")
+            Text(selectedActivity)
                 .font(.system(.headline, design: .rounded))
             Spacer()
             DatePicker("Reminder time", selection: $reminderTime, displayedComponents: .hourAndMinute)
@@ -227,26 +315,32 @@ struct OnboardingView: View {
                 .labelsHidden()
                 .frame(maxWidth: .infinity)
                 .accessibilityLabel("Habit reminder time")
+            bodyText("Your reminder arrives at this time on each day of the habit.",
+                     font: .footnote, style: .secondary)
             Spacer()
         }
         .padding(.horizontal, 28)
     }
 
     private var summaryContent: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 24) {
             AccentHeading(firstLine: "Awesome, that's a", highlightedLine: "Great habit!")
-                .padding(.top, 40)
+                .padding(.top, 24)
             Spacer()
             BundleResourceImage(name: "flower-happy")
-                .frame(width: 110, height: 110)
-                .accessibilityLabel("Happy Routiland flower mascot")
-            VStack(spacing: 17) {
-                summaryItem(selectedActivity, symbol: category.suggestions.first(where: { $0.title == selectedActivity })?.symbol ?? "star")
-                summaryItem("\(minutes) minutes", symbol: "timer")
-                summaryItem(frequency.title, symbol: "calendar")
+                .frame(width: 90, height: 90)
+                .accessibilityLabel("Happy Rootiland flower mascot")
+            // Everything that will be saved, including the topic and the reminder time.
+            VStack(spacing: 12) {
+                summaryItem(selectedActivity, symbol: activitySymbol)
+                summaryItem(category.shortTitle, symbol: category.symbol)
+                summaryItem(Habit.durationText(minutes), symbol: "timer")
+                summaryItem(frequencySummary, symbol: "calendar")
+                summaryItem("Reminder at \(TimeText.clock(reminderTime))", symbol: "bell")
             }
             .padding(.horizontal, 26)
             .accessibilityElement(children: .combine)
+            bodyText("Go back to change anything.", font: .footnote, style: .secondary)
             Spacer()
         }
         .padding(.horizontal, 12)
@@ -254,57 +348,71 @@ struct OnboardingView: View {
 
     private var notificationContent: some View {
         VStack(spacing: 20) {
-            AccentHeading(firstLine: "Awesome, that is a", highlightedLine: "Great habit!")
-                .padding(.top, 40)
+            AccentHeading(firstLine: "One last thing:", highlightedLine: "Reminders")
+                .padding(.top, 24)
             Spacer()
             VStack(spacing: 14) {
                 Image(systemName: "bell.badge.fill")
                     .font(.system(size: 42))
                     .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
                 Text("Don't Miss Your Habit")
                     .font(.title2.weight(.bold))
-                Text("Stay on track with customizable\nalerts about your habits.")
-                    .font(.subheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                // Says what the reminders actually do, and where they can be turned off.
+                bodyText("Get a gentle reminder at the time you picked for each habit. You can turn reminders off anytime in the Settings app.",
+                         font: .subheadline, style: .secondary)
+                    .padding(.horizontal, 20)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 50)
-            .background(.black, in: RoundedRectangle(cornerRadius: 28))
-            .environment(\.colorScheme, .dark)
+            .padding(.vertical, 40)
+            // Follows light and dark mode like the rest of the app's cards.
+            .background(RootilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 28))
             Spacer()
-            RoutilandPrimaryButton(title: "Allow Notifications") {
+            RootilandPrimaryButton(title: "Allow Notifications") {
+                // Disabled while the permission prompt is up, so a second tap can't skip a page.
+                isRequestingPermission = true
                 Task {
-                    store.notificationsEnabled = await NotificationService.requestPermission()
-                    if store.notificationsEnabled { await NotificationService.scheduleAll(store.habits) }
+                    _ = await store.enableNotifications()
+                    isRequestingPermission = false
                     advance()
                 }
             }
+            .disabled(isRequestingPermission)
             Button("Skip For Now") { advance() }
                 .font(.subheadline.weight(.medium))
                 .padding(.vertical, 8)
+                .disabled(isRequestingPermission)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 16)
     }
 
     private var leafyIntroduction: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        let days = RootilandStore.daysNeededForLevel
+        return VStack(spacing: 18) {
             AccentHeading(firstLine: "Let me present you", highlightedLine: "Leafy")
-            Spacer()
-            Image(systemName: "leaf.fill")
-                .font(.system(size: 98))
-                .foregroundStyle(Color.accentColor)
-                .accessibilityHidden(true)
-            Spacer()
-            Text("Leafy is your personal companion.\nEvery completed task gives your island\nexperience and helps it grow over time.")
-                .font(.system(.headline, design: .rounded))
-                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+            // The real island the user will grow, starting at level 1.
+            IslandRealityView(modelName: "leafy_island", level: 1, height: 280)
+            // Matches how Leafy actually grows: from fully completed days.
+            bodyText("Leafy is your personal companion. Every day you complete all of your habits, its island grows: level 2 after \(days[1]) completed days, level 3 after \(days[2]), and on up to level \(days.count).",
+                     font: .system(.headline, design: .rounded))
                 .padding(.horizontal, 8)
-            Spacer(minLength: 25)
+            Spacer(minLength: 12)
         }
         .padding(.horizontal, 28)
+    }
+
+    // MARK: Building Blocks
+
+    // Centered text that wraps naturally instead of using hard-coded line breaks.
+    private func bodyText(_ text: String, font: Font, style: HierarchicalShapeStyle = .primary) -> some View {
+        Text(text)
+            .font(font)
+            .foregroundStyle(style)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 340)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     // Summary cards are informational; unlike selectable onboarding rows,
@@ -313,11 +421,11 @@ struct OnboardingView: View {
         Label(text, systemImage: symbol)
             .font(.headline)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
+            .padding(16)
             .background(.background, in: RoundedRectangle(cornerRadius: 18))
     }
 
-    // Reusable layout shared by screens 3, 4, and 5.
+    // Reusable layout shared by the activity, duration and frequency pages.
     private func choicePage<Content: View>(first: String, second: String, subtitle: String,
                                            description: String, @ViewBuilder choices: () -> Content) -> some View {
         VStack(spacing: 22) {
@@ -328,38 +436,143 @@ struct OnboardingView: View {
             Spacer(minLength: 15)
             choices()
             Spacer(minLength: 15)
-            Text(description)
-                .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                .multilineTextAlignment(.center)
+            bodyText(description, font: .system(.subheadline, design: .rounded).weight(.semibold))
             Spacer(minLength: 6)
         }
         .padding(.horizontal, 28)
     }
 
+    // MARK: Habit Details
+
+    private func isSuggestion(_ title: String) -> Bool {
+        category.suggestions.contains { $0.title == title }
+    }
+
+    private var activitySymbol: String {
+        category.suggestions.first { $0.title == selectedActivity }?.symbol ?? "pencil"
+    }
+
+    private var sortedCustomDates: [Date] {
+        customDates.compactMap { Calendar.current.date(from: $0) }.sorted()
+    }
+
+    // "Choose days", "20 Oct, 22 Oct" or "6 days".
+    private var customDaysSummary: String {
+        let dates = sortedCustomDates
+        switch dates.count {
+        case 0: return "Choose days"
+        case 1...3: return dates.map { $0.formatted(.dateTime.day().month(.abbreviated).locale(RootilandDesign.locale)) }
+            .joined(separator: ", ")
+        default: return "\(dates.count) days"
+        }
+    }
+
+    // The habit is created today, so weekly and monthly habits repeat on today's weekday or date.
+    private var frequencyDetail: String {
+        switch frequency {
+        case .daily:
+            return "Repeats every day."
+        case .weekly:
+            return "Repeats every \(Date.now.formatted(.dateTime.weekday(.wide).locale(RootilandDesign.locale))), the weekday you start."
+        case .monthly:
+            let day = Calendar.current.component(.day, from: .now)
+            return "Repeats on day \(day) of each month, the date you start."
+                + (day > 28 ? " Months without that day are skipped." : "")
+        case .custom:
+            return customDates.isEmpty ? "Pick the days in the calendar." : "Happens only on the days you picked."
+        }
+    }
+
+    private var frequencySummary: String {
+        switch frequency {
+        case .daily: return "Every day"
+        case .weekly: return "Every \(Date.now.formatted(.dateTime.weekday(.wide).locale(RootilandDesign.locale)))"
+        case .monthly: return "Day \(Calendar.current.component(.day, from: .now)) of each month"
+        case .custom: return customDates.count == 1 ? "1 chosen day" : "\(customDates.count) chosen days"
+        }
+    }
+
+    // A sensible first reminder for each topic; the user can change it on the time page.
+    private func suggestedReminderTime(for category: HabitCategory) -> Date {
+        let (hour, minute): (Int, Int) = switch category {
+        case .movement: (7, 30)
+        case .wellbeing: (21, 0)
+        case .growth: (20, 0)
+        case .study: (9, 0)
+        }
+        return Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: .now) ?? .now
+    }
+
+    // MARK: Navigation
+
+    private func selectCategory(_ item: HabitCategory) {
+        // Only replace the activity if it's still the previous topic's suggestion,
+        // so a custom name the user typed is never overwritten.
+        if item != category && isSuggestion(selectedActivity) {
+            selectedActivity = item.suggestions[0].title
+        }
+        category = item
+    }
+
     private func previousPage() {
-        guard page.rawValue > 0 else { return }
-        page = OnboardingPage(rawValue: page.rawValue - 1) ?? .welcome
+        guard let previous = OnboardingPage(rawValue: page.rawValue - 1) else { return }
+        movingForward = false
+        withAnimation(.smooth(duration: 0.3)) { page = previous }
     }
 
     private func advance() {
-        // Finishing setup creates the first real habit once, rather than sample data.
-        if page == .summary {
-            let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
-            store.addHabit(Habit(category: category,
-                                 title: selectedActivity,
-                                 durationMinutes: minutes,
-                                 frequency: frequency,
-                                 reminderHour: components.hour ?? 8,
-                                 reminderMinute: components.minute ?? 0))
-        }
         if page == .leafyIntro {
-            store.finishedOnboarding = true
-        } else {
-            page = OnboardingPage(rawValue: page.rawValue + 1) ?? .welcome
+            finishOnboarding()
+            return
         }
+        guard let next = OnboardingPage(rawValue: page.rawValue + 1) else { return }
+        if next == .time && !hasSuggestedTime {
+            reminderTime = suggestedReminderTime(for: category)
+            hasSuggestedTime = true
+        }
+        movingForward = true
+        withAnimation(.smooth(duration: 0.3)) { page = next }
+    }
+
+    // Saves the habit and marks onboarding finished in the same step, so onboarding can
+    // never run twice for the same habit. Adding it also schedules its reminder if allowed.
+    private func finishOnboarding() {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+        store.addHabit(Habit(category: category,
+                             title: selectedActivity,
+                             durationMinutes: minutes,
+                             frequency: frequency,
+                             reminderHour: components.hour ?? 8,
+                             reminderMinute: components.minute ?? 0,
+                             customDays: frequency == .custom ? sortedCustomDates.map(Habit.dayKey(for:)) : []))
+        store.finishedOnboarding = true
+    }
+}
+
+// 24-hour "07:30", matching the rest of the app.
+private enum TimeText {
+    static func clock(_ date: Date) -> String {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return String(format: "%02d:%02d", parts.hour ?? 0, parts.minute ?? 0)
     }
 }
 
 #Preview("Onboarding") {
-    OnboardingView().environmentObject(RoutilandStore())
+    OnboardingView().environmentObject(RootilandStore())
+}
+
+#Preview("Frequency") {
+    OnboardingView(startingAt: .frequency).environmentObject(RootilandStore())
+}
+
+#Preview("Summary") {
+    OnboardingView(startingAt: .summary).environmentObject(RootilandStore())
+}
+
+#Preview("Reminders") {
+    OnboardingView(startingAt: .notifications).environmentObject(RootilandStore())
+}
+
+#Preview("Leafy") {
+    OnboardingView(startingAt: .leafyIntro).environmentObject(RootilandStore())
 }
