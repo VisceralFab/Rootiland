@@ -10,7 +10,8 @@ struct LeafyView: View {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(spacing: 12) {
                     islandPreview
-                        .contentShape(Rectangle())
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .contentShape(RoundedRectangle(cornerRadius: 22))
                         .onTapGesture { showingIsland = true }
                         .accessibilityAddTraits(.isButton)
                         .accessibilityHint("Open the island full screen")
@@ -35,7 +36,7 @@ struct LeafyView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(16)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
 
                 VStack(alignment: .leading, spacing: 12) {
                     Label(store.isLeafyFullyGrown ? "Quest complete" : "Next quest",

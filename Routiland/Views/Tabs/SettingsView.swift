@@ -6,12 +6,7 @@ import UIKit
 // so color changes and appearance changes feel immediate across the app.
 struct SettingsView: View {
     @EnvironmentObject private var store: RootilandStore
-    @State private var presentedSheet: SettingsSheet?
-
-    private enum SettingsSheet: String, Identifiable {
-        case units, color
-        var id: String { rawValue }
-    }
+    @State private var showingColorSheet = false
 
     var body: some View {
         ScrollView {
@@ -28,39 +23,7 @@ struct SettingsView: View {
 
                     panelDivider
 
-                    SettingsPanelRow(title: "Dark mode", systemImage: "moon") {
-                        Toggle("", isOn: $store.darkMode)
-                            .labelsHidden()
-                            .tint(store.accentTheme.color)
-                    }
-
-                    panelDivider
-
-                    // Opens this app's page in the iPhone's Settings app, where its language is chosen.
-                    Button(action: openSystemSettings) {
-                        SettingsPanelRow(title: "Language", systemImage: "globe") {
-                            systemSettingsAccessory("English")
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Opens the Settings app")
-
-                    panelDivider
-
-                    Button { presentedSheet = .units } label: {
-                        SettingsPanelRow(title: "Units", systemImage: "ruler") {
-                            HStack(spacing: 8) {
-                                Text(store.measurementSystem.title)
-                                Image(systemName: "chevron.right").font(.caption.weight(.semibold))
-                            }
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
-
-                    panelDivider
-
-                    Button { presentedSheet = .color } label: {
+                    Button { showingColorSheet = true } label: {
                         SettingsPanelRow(title: "Primary Color", systemImage: "paintpalette") {
                             HStack(spacing: 8) {
                                 Text(store.accentTheme.title)
@@ -98,11 +61,8 @@ struct SettingsView: View {
         .background(RootilandDesign.canvas(darkMode: store.darkMode).ignoresSafeArea())
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
-        .sheet(item: $presentedSheet) { sheet in
-            switch sheet {
-            case .units: MeasurementSystemSheet()
-            case .color: PrimaryColorSheet()
-            }
+        .sheet(isPresented: $showingColorSheet) {
+            PrimaryColorSheet()
         }
     }
 
@@ -123,11 +83,6 @@ struct SettingsView: View {
         .foregroundStyle(.secondary)
     }
 
-    private func openSystemSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
-    }
-
     // iOS only lists the app under Notifications after permission has been asked for once,
     // so the first tap shows the permission prompt instead.
     private func openNotificationSettings() {
@@ -141,7 +96,7 @@ struct SettingsView: View {
     }
 }
 
-// Both pickers share their presentation, spacing, background and Done control.
+// Presentation, spacing and Done control for the primary color picker.
 private struct SettingsSelectionSheet<Content: View>: View {
     @EnvironmentObject private var store: RootilandStore
     @Environment(\.dismiss) private var dismiss
@@ -190,43 +145,6 @@ private struct SettingsSelectionPreview: View {
             .frame(maxWidth: .infinity)
             .padding(16)
             .background(RootilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 20))
-    }
-}
-
-private struct MeasurementSystemSheet: View {
-    @EnvironmentObject private var store: RootilandStore
-
-    var body: some View {
-        SettingsSelectionSheet(title: "Units") {
-            SettingsSelectionPreview(symbol: "ruler", title: store.measurementSystem.title)
-
-            VStack(spacing: 0) {
-                ForEach(MeasurementSystem.allCases) { system in
-                    Button {
-                        withAnimation(.smooth) { store.measurementSystem = system }
-                    } label: {
-                        HStack {
-                            Text(system.title).foregroundStyle(.primary)
-                            Spacer()
-                            if store.measurementSystem == system {
-                                Image(systemName: "checkmark")
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(store.accentTheme.color)
-                            }
-                        }
-                        .padding(18)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(store.measurementSystem == system ? [.isSelected] : [])
-
-                    if system != MeasurementSystem.allCases.last {
-                        Divider().padding(.horizontal, 18)
-                    }
-                }
-            }
-            .background(RootilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 20))
-        }
     }
 }
 

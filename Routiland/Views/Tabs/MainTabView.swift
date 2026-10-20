@@ -84,20 +84,11 @@ struct MainTabView: View {
         .sheet(isPresented: $showingAddHabit) { HabitEditorView() }
     }
 
-    // A filled circle in the theme color with a white plus, like the reference design.
+    // Color only the symbol; the tab keeps the system glass background.
     private var themedPlusImage: UIImage {
-        let diameter: CGFloat = 44
-        let configuration = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold)
-        let plus = UIImage(systemName: "plus", withConfiguration: configuration)?
-            .withTintColor(.white, renderingMode: .alwaysOriginal)
-        let image = UIGraphicsImageRenderer(size: CGSize(width: diameter, height: diameter)).image { _ in
-            UIColor(store.accentTheme.color).setFill()
-            UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: diameter, height: diameter)).fill()
-            if let plus {
-                plus.draw(at: CGPoint(x: (diameter - plus.size.width) / 2, y: (diameter - plus.size.height) / 2))
-            }
-        }
-        return image.withRenderingMode(.alwaysOriginal)
+        let configuration = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
+        return (UIImage(systemName: "plus", withConfiguration: configuration) ?? UIImage())
+            .withTintColor(UIColor(store.accentTheme.color), renderingMode: .alwaysOriginal)
     }
 
     // MARK: - Animated Tab Icons
