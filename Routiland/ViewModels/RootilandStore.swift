@@ -30,6 +30,9 @@ final class RootilandStore: ObservableObject {
     }
 
     @Published private(set) var fullyCompletedDays: Set<String> = []
+    @Published private(set) var earnedOrnaments: [LeafyOrnament] = []
+    @Published private(set) var isLeafyCheatMode = false
+    private var completionHistory: [LeafyCompletion] = []
 
     private let defaults: UserDefaults
     private var isLoading = true
@@ -48,6 +51,21 @@ final class RootilandStore: ObservableObject {
         darkMode = defaults.bool(forKey: "darkMode")
         notificationsEnabled = defaults.bool(forKey: "notificationsEnabled")
         measurementSystem = MeasurementSystem(rawValue: defaults.string(forKey: "measurementSystem") ?? "metric") ?? .metric
+        if let data = defaults.data(forKey: "leafyCompletionHistory"),
+           let saved = try? JSONDecoder().decode([LeafyCompletion].self, from: data) {
+            completionHistory = saved
+        } else {
+            completionHistory = habits.flatMap { habit in
+                Set(habit.completedDays).map {
+                    LeafyCompletion(habitID: habit.id, day: $0, category: habit.category)
+                }
+            }
+            saveCompletionHistory()
+        }
+        if let data = defaults.data(forKey: "leafyOrnaments"),
+           let saved = try? JSONDecoder().decode([LeafyOrnament].self, from: data) {
+            earnedOrnaments = saved
+        }
         if let savedDays = defaults.stringArray(forKey: "fullyCompletedDays") {
             fullyCompletedDays = Set(savedDays)
         } else {
@@ -62,6 +80,7 @@ final class RootilandStore: ObservableObject {
         }
         isLoading = false
         recordCompletedDay(on: .now)
+        unlockOrnaments()
     }
 
     private func saveHabits() {
@@ -121,8 +140,13 @@ final class RootilandStore: ObservableObject {
         guard let index = habits.firstIndex(where: { $0.id == habit.id }) else { return }
         let key = Habit.dayKey(for: date)
         if habits[index].completedDays.contains(key) {
+            completionHistory.removeAll { $0.habitID == habit.id && $0.day == key }
+            saveCompletionHistory()
             habits[index].completedDays.removeAll { $0 == key }
         } else {
+            completionHistory.append(LeafyCompletion(habitID: habit.id, day: key,
+                                                     category: habits[index].category))
+            saveCompletionHistory()
             habits[index].completedDays.append(key)
         }
         recordCompletedDay(on: date)
@@ -139,6 +163,7 @@ final class RootilandStore: ObservableObject {
               dueHabits.allSatisfy({ $0.isCompleted(on: date) }) else { return }
         fullyCompletedDays.insert(key)
         defaults.set(fullyCompletedDays.sorted(), forKey: "fullyCompletedDays")
+        if !isLoading { unlockOrnaments() }
     }
 
     // The habits due today, in the order they were added.
@@ -151,13 +176,63 @@ final class RootilandStore: ObservableObject {
     // The days don't need to be in a row, and a completed day is never taken away.
     // Each entry is the total number of completed days needed to reach that level
     // (index 0 is level 1). Change the numbers here to rebalance the game.
-    static let daysNeededForLevel = [0, 3, 5, 8, 12]
+    // Preserve the original first five levels, then earn one level every four completed days.
+    static let daysNeededForLevel = [0, 3, 5, 8, 12] + (6...99).map { 12 + ($0 - 5) * 4 }
     static var maxLeafyLevel: Int { daysNeededForLevel.count }
 
     var completedDayCount: Int { fullyCompletedDays.count }
 
     var leafyLevel: Int {
+        if isLeafyCheatMode { return Self.maxLeafyLevel }
+        return earnedLeafyLevel
+    }
+
+    private var earnedLeafyLevel: Int {
         (Self.daysNeededForLevel.lastIndex { completedDayCount >= $0 } ?? 0) + 1
+    }
+
+    var leafyOrnaments: [LeafyOrnament] {
+        if isLeafyCheatMode {
+            // A compact showcase of all four models, without fabricating earned rewards.
+            return HabitCategory.allCases.enumerated().map { index, category in
+                LeafyOrnament(level: 7 + index * 2, category: category)
+            }
+        }
+        return earnedOrnaments
+    }
+
+    func enableLeafyCheats() {
+        // Session-only: restarting restores the user's real level and earned ornaments.
+        isLeafyCheatMode = true
+    }
+
+    private func saveCompletionHistory() {
+        guard let data = try? JSONEncoder().encode(completionHistory) else { return }
+        defaults.set(data, forKey: "leafyCompletionHistory")
+    }
+
+    private func unlockOrnaments() {
+        guard earnedLeafyLevel >= 7 else { return }
+        let completedDays = fullyCompletedDays.sorted()
+        for level in stride(from: 7, through: earnedLeafyLevel, by: 2) {
+            guard !earnedOrnaments.contains(where: { $0.level == level }) else { continue }
+            let lowerIndex = Self.daysNeededForLevel[level - 3] - 1
+            let upperIndex = Self.daysNeededForLevel[level - 1] - 1
+            guard completedDays.indices.contains(lowerIndex), completedDays.indices.contains(upperIndex) else { continue }
+            let start = completedDays[lowerIndex]
+            let end = completedDays[upperIndex]
+            let interval = completionHistory.filter { $0.day > start && $0.day <= end }
+            let counts = Dictionary(grouping: interval, by: \.category).mapValues(\.count)
+            // Stable tie-breaking follows the topic order, never dictionary iteration order.
+            let winner = HabitCategory.allCases.reduce(HabitCategory.movement) { best, candidate in
+                (counts[candidate, default: 0] > counts[best, default: 0]) ? candidate : best
+            }
+            earnedOrnaments.append(LeafyOrnament(level: level, category: winner))
+        }
+        earnedOrnaments.sort { $0.level < $1.level }
+        if let data = try? JSONEncoder().encode(earnedOrnaments) {
+            defaults.set(data, forKey: "leafyOrnaments")
+        }
     }
 
     var isLeafyFullyGrown: Bool { leafyLevel == Self.maxLeafyLevel }

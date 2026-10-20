@@ -1,114 +1,107 @@
 import SwiftUI
 
 // MARK: - Topics
-// Presented as a sheet from Track; each category opens a full-screen habit list.
+// The selector filters the list in place, without opening another modal.
 struct TopicsView: View {
     @EnvironmentObject private var store: RootilandStore
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedCategory: HabitCategory?
-    private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
+    @State private var selectedCategory: HabitCategory
+
+    init(initialCategory: HabitCategory = .movement) {
+        _selectedCategory = State(initialValue: initialCategory)
+    }
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(HabitCategory.allCases) { category in
-                    Button { selectedCategory = category } label: {
-                        VStack(alignment: .leading, spacing: 20) {
-                            HStack {
-                                // Each topic shows in its own fruit color.
-                                Image(systemName: category.symbol)
-                                    .font(.title3.weight(.semibold))
-                                    .foregroundStyle(category.iconColor)
-                                    .frame(width: 44, height: 44)
-                                    .background(RootilandDesign.iconBackground, in: RoundedRectangle(cornerRadius: 12))
-                                Spacer()
-                                Text("\(store.habits.filter { $0.category == category }.count)")
-                                    .font(.caption.weight(.semibold).monospacedDigit())
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer(minLength: 0)
-                            Text(category.shortTitle)
-                                .font(.system(.headline, design: .rounded))
-                                .multilineTextAlignment(.leading)
-                                .foregroundStyle(.primary)
-                        }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
-                        .background {
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(RootilandDesign.cardBackground(darkMode: store.darkMode))
-                                .shadow(color: .black.opacity(0.08), radius: 0, y: 4)
-                        }
+        let habits = store.habits.filter { $0.category == selectedCategory }
+
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    topicSelector
+                        .id("topicSelector")
+
+                    HStack {
+                        Text("Your habits").font(.title3.bold())
+                        Spacer()
+                        Text(habits.count == 1 ? "1 habit" : "\(habits.count) habits")
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
+
+                    if habits.isEmpty {
+                        ContentUnavailableView("No habits yet", systemImage: selectedCategory.symbol,
+                                               description: Text("Add a habit to this topic with the + button in the tab bar."))
+                    } else {
+                        HabitListCard(habits: habits, allowsManagement: true)
+                            .id(selectedCategory)
+                        Text("Swipe a habit to edit or delete it.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .padding(20)
             }
-            .padding(20)
+            .swipeActionsContainer()
+            .onChange(of: selectedCategory) { _, _ in
+                proxy.scrollTo("topicSelector", anchor: .top)
+            }
         }
         .background(RootilandDesign.canvas(darkMode: store.darkMode))
-        .navigationTitle("Topics")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Close", systemImage: "xmark") { dismiss() }
                     .labelStyle(.iconOnly)
             }
-        }
-        .fullScreenCover(item: $selectedCategory) { category in
-            NavigationStack { TopicDetailView(category: category) }
         }
     }
-}
 
-// MARK: - Topic Detail
-// All habits in the category, including those not scheduled today.
-struct TopicDetailView: View {
-    @EnvironmentObject private var store: RootilandStore
-    @Environment(\.dismiss) private var dismiss
-    let category: HabitCategory
+    private var topicSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Topic")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 16)
 
-    var body: some View {
-        let habits = store.habits.filter { $0.category == category }
-
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Text("Your habits").font(.title3.bold())
-                    Spacer()
-                    Text("\(habits.count) habits")
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                Text("Category")
+                    .font(.body)
+                    .fixedSize(horizontal: true, vertical: false)
+                Spacer(minLength: 0)
+                Menu {
+                    Picker("Category", selection: $selectedCategory) {
+                        ForEach(HabitCategory.allCases) { category in
+                            Label(category.title, systemImage: category.symbol).tag(category)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: selectedCategory.symbol)
+                        Text(selectedCategory.title)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .font(.body)
+                    .foregroundStyle(store.accentTheme.color)
+                    .frame(minHeight: 28)
+                    .contentShape(Rectangle())
                 }
-
-                if habits.isEmpty {
-                    ContentUnavailableView("No habits yet", systemImage: category.symbol,
-                                           description: Text("Add a habit to this topic with the + button in the tab bar."))
-                } else {
-                    HabitListCard(habits: habits, allowsManagement: true)
-                    Text("Swipe a habit to edit or delete it.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                .buttonStyle(.plain)
+                .layoutPriority(1)
+                .accessibilityLabel("Category")
+                .accessibilityValue(selectedCategory.title)
             }
-            .padding(20)
-        }
-        .swipeActionsContainer()
-        .background(RootilandDesign.canvas(darkMode: store.darkMode))
-        .navigationTitle(category.shortTitle)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Close", systemImage: "xmark") { dismiss() }
-                    .labelStyle(.iconOnly)
-            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(RootilandDesign.cardBackground(darkMode: store.darkMode),
+                        in: RoundedRectangle(cornerRadius: 22))
         }
     }
 }
 
 #Preview {
     NavigationStack { TopicsView() }
-        .environmentObject(RootilandStore())
-}
-
-#Preview("Topic habits") {
-    NavigationStack { TopicDetailView(category: .movement) }
         .environmentObject(RootilandStore())
 }

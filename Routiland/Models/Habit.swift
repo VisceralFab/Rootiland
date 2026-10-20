@@ -193,6 +193,31 @@ extension Habit {
     }
 }
 
+// MARK: - Leafy Rewards
+struct LeafyOrnament: Codable, Hashable, Identifiable {
+    let level: Int
+    let category: HabitCategory
+    var id: Int { level }
+}
+
+// Retain category counts even when the source habit is edited or deleted.
+struct LeafyCompletion: Codable {
+    let habitID: UUID
+    let day: String
+    let category: HabitCategory
+}
+
+extension HabitCategory {
+    var ornamentModelName: String {
+        switch self {
+        case .movement: "Gym_Weight_1014140228_texture"
+        case .wellbeing: "_candle_with_flame_1014140119_texture"
+        case .study: "Codebook_Laptop_1014142051_texture"
+        case .growth: "Golden_Star_Medal_1014141455_texture"
+        }
+    }
+}
+
 // MARK: - App Accent Color
 // Green is the default. Pink and blue are optional colors selectable in Settings.
 enum AccentTheme: String, CaseIterable, Codable, Identifiable {

@@ -45,14 +45,14 @@ struct LeafyView: View {
                         .foregroundStyle(store.accentTheme.color)
                     Text(store.isLeafyFullyGrown
                          ? "Leafy has reached the maximum level!"
-                         : "Reach level \(store.leafyLevel + 1) to unlock new decorations for Leafy!")
+                         : nextQuestTitle)
                         .font(.title3.bold())
                     Text(store.isLeafyFullyGrown
                          ? "Keep completing your habits and caring for your island."
-                         : "Complete all of a day's habits to count it. \(store.completedDayCount) of \(RootilandStore.daysNeededForLevel[store.leafyLevel]) days done.")
+                         : "Complete all of a day's habits to count it. \(store.completedDayCount) of \(RootilandStore.daysNeededForLevel[nextDecorationLevel - 1]) days done.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    ProgressView(value: store.levelProgress)
+                    ProgressView(value: decorationProgress)
                         .tint(store.accentTheme.color)
                 }
                 .padding(18)
@@ -74,13 +74,31 @@ struct LeafyView: View {
         store.daysToNextLevel == 1 ? "1 day to grow" : "\(store.daysToNextLevel) days to grow"
     }
 
+    private var nextDecorationLevel: Int {
+        if store.leafyLevel < 2 { return 2 }
+        if store.leafyLevel < 5 { return 5 }
+        return min(99, store.leafyLevel + (store.leafyLevel.isMultiple(of: 2) ? 1 : 2))
+    }
+
+    private var nextQuestTitle: String {
+        if nextDecorationLevel == 2 { return "Reach level 2 to grow a banana plant!" }
+        if nextDecorationLevel == 5 { return "Reach level 5 to grow a banana tree!" }
+        return "Reach level \(nextDecorationLevel) to earn an ornament for your most completed topic!"
+    }
+
+    private var decorationProgress: Double {
+        guard !store.isLeafyFullyGrown else { return 1 }
+        return min(1, Double(store.completedDayCount) / Double(RootilandStore.daysNeededForLevel[nextDecorationLevel - 1]))
+    }
+
     @ViewBuilder
     private var islandPreview: some View {
         // Keep a single live RealityKit renderer while the full-screen scene is open.
         if showingIsland {
             Color.clear.frame(height: 330)
         } else {
-            IslandRealityView(modelName: "leafy_island", level: store.leafyLevel)
+            IslandRealityView(modelName: "leafy_island", level: store.leafyLevel,
+                              ornaments: store.leafyOrnaments)
         }
     }
 }
@@ -94,6 +112,7 @@ private struct LeafyIslandFullScreenView: View {
             IslandRealityView(
                 modelName: "leafy_island",
                 level: store.leafyLevel,
+                ornaments: store.leafyOrnaments,
                 height: geometry.size.height
             )
             .frame(width: geometry.size.width, height: geometry.size.height)

@@ -11,7 +11,7 @@ struct TrackView: View {
             trackContent(at: context.date)
         }
         .background(RootilandDesign.canvas(darkMode: store.darkMode))
-        .navigationTitle("Track")
+        .navigationBarTitleDisplayMode(.inline)
         // Topics used to be its own tab; it now lives here so the tab bar has room for the +.
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -22,7 +22,9 @@ struct TrackView: View {
             }
         }
         .sheet(isPresented: $showingTopics) {
-            NavigationStack { TopicsView() }
+            NavigationStack {
+                TopicsView(initialCategory: store.habits.first?.category ?? .movement)
+            }
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
@@ -34,6 +36,14 @@ struct TrackView: View {
 
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                Text("Track")
+                    .font(.largeTitle.bold())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 10) { store.enableLeafyCheats() }
+                    .sensoryFeedback(.success, trigger: store.isLeafyCheatMode)
+                    .accessibilityAddTraits(.isHeader)
+
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Today's habits").font(.title3.bold())
