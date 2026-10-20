@@ -44,7 +44,7 @@ struct SettingsView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "leaf.fill")
                             .foregroundStyle(store.accentTheme.color)
-                        Text("Rootiland")
+                        Text("Rootine")
                             .font(.headline)
                         Spacer()
                     }
@@ -153,7 +153,7 @@ private struct PrimaryColorSheet: View {
 
     var body: some View {
         SettingsSelectionSheet(title: "Primary Color") {
-            SettingsSelectionPreview(symbol: "leaf.fill", title: "Rootiland")
+            SettingsSelectionPreview(symbol: "leaf.fill", title: "Rootine")
 
             HStack(spacing: 36) {
                 ForEach(AccentTheme.allCases) { theme in

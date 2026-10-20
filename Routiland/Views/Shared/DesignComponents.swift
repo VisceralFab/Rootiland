@@ -19,6 +19,9 @@ enum RootilandDesign {
         darkMode ? Color(uiColor: .secondarySystemBackground) : Color(uiColor: .systemBackground)
     }
 
+    // The neutral background behind topic icons; the icon itself carries the topic color.
+    static let iconBackground = Color(uiColor: .tertiarySystemFill)
+
     static func separator(darkMode: Bool) -> Color {
         darkMode ? Color.white.opacity(0.10) : Color.black.opacity(0.10)
     }

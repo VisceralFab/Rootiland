@@ -36,16 +36,31 @@ enum HabitCategory: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    // Each topic has its own color so habits are easy to tell apart on the
-    // Timeline and on the topic cards. It stays the same whatever the accent theme.
-    var color: Color {
+    // The fruit palette each topic is based on.
+    private var baseColor: Color {
         switch self {
-        case .movement: Color(red: 0.49, green: 0.71, blue: 0.36)
-        case .wellbeing: Color(red: 0.55, green: 0.24, blue: 0.38)
-        case .growth: Color(red: 0.93, green: 0.53, blue: 0.48)
-        case .study: Color(red: 0.34, green: 0.47, blue: 0.62)
+        case .movement: Color(red: 0xFF / 255, green: 0xAD / 255, blue: 0x4F / 255)   // Mango #FFAD4F
+        case .wellbeing: Color(red: 0x70 / 255, green: 0x96 / 255, blue: 0xBB / 255)  // Blue #7096BB
+        case .growth: Color(red: 0xEF / 255, green: 0xD4 / 255, blue: 0x6B / 255)     // Banana #EFD46B
+        case .study: Color(red: 0xF0 / 255, green: 0x81 / 255, blue: 0x6D / 255)      // Guava #F0816D
         }
     }
+
+    // Each topic's color, used everywhere the topic appears (Timeline, Topics, habit rows
+    // and onboarding), whatever the accent theme: a soft pastel of its fruit color.
+    var color: Color { baseColor.mix(with: .white, by: 0.35) }
+
+    // Symbols drawn on top of the pastel (tiles, badges, checkmarks): a deep shade of the
+    // same fruit, gentler than black and still easy to read.
+    var onColor: Color { baseColor.mix(with: .black, by: 0.45) }
+
+    // The fruit color deepened slightly, for icons and outlines on white, where the
+    // pastel alone would barely show.
+    var deepColor: Color { baseColor.mix(with: .black, by: 0.25) }
+
+    // Colorful topic symbols on a neutral background: the fruit color, a touch deeper
+    // so banana and mango stay visible on light grey.
+    var iconColor: Color { baseColor.mix(with: .black, by: 0.12) }
 
     var suggestions: [ActivitySuggestion] {
         switch self {
@@ -185,10 +200,12 @@ enum AccentTheme: String, CaseIterable, Codable, Identifiable {
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
 
-    // A slightly lighter spectrum: each original brand color blended about 18% toward white.
+    // The default green is the mid green of the brand palette (PANTONE 15-6423 TCX, #708C3F),
+    // dark enough for white labels and green text to stay readable. Pink and blue are the
+    // brand colors blended about 18% toward white.
     var color: Color {
         switch self {
-        case .green: Color(red: 135 / 255, green: 220 / 255, blue: 46 / 255)
+        case .green: Color(red: 112 / 255, green: 140 / 255, blue: 63 / 255)
         case .pink: Color(red: 235 / 255, green: 157 / 255, blue: 212 / 255)
         case .blue: Color(red: 46 / 255, green: 157 / 255, blue: 1)
         }

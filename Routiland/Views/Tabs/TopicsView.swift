@@ -15,9 +15,12 @@ struct TopicsView: View {
                     Button { selectedCategory = category } label: {
                         VStack(alignment: .leading, spacing: 20) {
                             HStack {
+                                // Each topic shows in its own fruit color.
                                 Image(systemName: category.symbol)
-                                    .font(.title2)
-                                    .foregroundStyle(store.accentTheme.color)
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(category.iconColor)
+                                    .frame(width: 44, height: 44)
+                                    .background(RootilandDesign.iconBackground, in: RoundedRectangle(cornerRadius: 12))
                                 Spacer()
                                 Text("\(store.habits.filter { $0.category == category }.count)")
                                     .font(.caption.weight(.semibold).monospacedDigit())

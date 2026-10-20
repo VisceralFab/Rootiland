@@ -170,11 +170,11 @@ struct OnboardingView: View {
     private var welcomeContent: some View {
         VStack(spacing: 22) {
             Spacer()
-            AccentHeading(firstLine: "Build habits", highlightedLine: "In Rootiland.")
+            AccentHeading(firstLine: "Build habits", highlightedLine: "In Rootine.")
             Spacer()
             BundleResourceImage(name: "flower-mascot")
                 .frame(width: 148, height: 148)
-                .accessibilityLabel("Rootiland flower mascot")
+                .accessibilityLabel("Rootine flower mascot")
             Spacer()
             bodyText("Turn small actions into habits. Track your progress, stay focused, and keep moving forward.",
                      font: .system(.headline, design: .rounded))
@@ -192,10 +192,12 @@ struct OnboardingView: View {
                 ForEach(HabitCategory.allCases) { item in
                     Button { selectCategory(item) } label: {
                         VStack(alignment: .leading, spacing: 14) {
+                            // The topic's own color; selection is shown by the border.
                             Image(systemName: item.symbol)
-                                .font(.title2)
-                                // Selection should highlight only the border, not the icon itself.
-                                .foregroundStyle(.primary)
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(item.iconColor)
+                                .frame(width: 44, height: 44)
+                                .background(RootilandDesign.iconBackground, in: RoundedRectangle(cornerRadius: 12))
                             Spacer(minLength: 4)
                             Text(item.shortTitle)
                                 .font(.system(.headline, design: .rounded))
@@ -329,7 +331,7 @@ struct OnboardingView: View {
             Spacer()
             BundleResourceImage(name: "flower-happy")
                 .frame(width: 90, height: 90)
-                .accessibilityLabel("Happy Rootiland flower mascot")
+                .accessibilityLabel("Happy Rootine flower mascot")
             // Everything that will be saved, including the topic and the reminder time.
             VStack(spacing: 12) {
                 summaryItem(selectedActivity, symbol: activitySymbol)

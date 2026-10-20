@@ -12,7 +12,6 @@ struct MainTabView: View {
         case track
         case leafy
         case timeline
-        case settings
         // The prominent + in the tab bar. It never stays selected; it opens the New Habit sheet.
         case addHabit
     }
@@ -50,14 +49,6 @@ struct MainTabView: View {
                 tabLabel("Timeline", systemImage: "calendar.day.timeline.left", tab: .timeline, effect: .bounceUp)
             }
 
-            // MARK: Settings
-            // Manages notifications, appearance and the accent color.
-            SwiftUI.Tab(value: AppTab.settings) {
-                NavigationStack { SettingsView() }
-            } label: {
-                tabLabel("Settings", systemImage: "gearshape.fill", tab: .settings, effect: .rotate)
-            }
-
             // MARK: Add Habit
             // The prominent role gives this tab its own circle at the end of the tab bar.
             SwiftUI.Tab(value: AppTab.addHabit, role: .prominent) {
@@ -93,9 +84,9 @@ struct MainTabView: View {
 
     // MARK: - Animated Tab Icons
     // When a tab becomes selected its symbol plays a short animation, like the reference:
-    // the gear spins, the leaf wiggles and the other icons bounce.
+    // the leaf wiggles and the other icons bounce.
     private enum IconEffect {
-        case bounceUp, wiggle, rotate
+        case bounceUp, wiggle
     }
 
     @ViewBuilder
@@ -109,8 +100,6 @@ struct MainTabView: View {
                 Image(systemName: systemImage).symbolEffect(.bounce.up.byLayer, value: trigger)
             case .wiggle:
                 Image(systemName: systemImage).symbolEffect(.wiggle.byLayer, value: trigger)
-            case .rotate:
-                Image(systemName: systemImage).symbolEffect(.rotate.byLayer, value: trigger)
             }
         }
     }

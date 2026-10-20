@@ -426,7 +426,7 @@ private struct TimeScale {
 
 private struct WeekGrid: View {
     static let axisWidth: CGFloat = 30
-    private let iconSize: CGFloat = 34
+    private let iconSize: CGFloat = 38
 
     let week: [DaySchedule]
     let selectedDay: Date
@@ -594,14 +594,18 @@ private struct GridIcon: View {
     var body: some View {
         let occurrence = occurrences[0]
         ZStack {
+            // Like Structured: the selected day shows solid circles in the topic color with a
+            // white symbol; other days show solid grey circles with the colorful symbol. Both
+            // are opaque so the day's line passes behind them instead of through them.
             Capsule()
-                .fill(highlighted ? AnyShapeStyle(occurrence.color) : AnyShapeStyle(Color.secondary.opacity(0.14)))
+                .fill(highlighted ? occurrence.habit.category.iconColor : Color(uiColor: .systemGray5))
             if highlighted {
                 Capsule().strokeBorder(.background, lineWidth: 2)
             }
             Image(systemName: occurrence.habit.category.symbol)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(highlighted ? .white : occurrence.color)
+                .symbolVariant(.fill)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(highlighted ? Color.white : occurrence.habit.category.iconColor)
         }
         .frame(width: width, height: height)
         .overlay(alignment: .bottomTrailing) {
@@ -615,7 +619,7 @@ private struct GridIcon: View {
             } else if occurrence.isCompleted {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.white, occurrence.color)
+                    .foregroundStyle(occurrence.habit.category.onColor, occurrence.color)
                     .offset(x: 4, y: 3)
             }
         }
@@ -839,10 +843,11 @@ private struct HabitBadge: View {
 
     var body: some View {
         Image(systemName: occurrence.habit.category.symbol)
+            .symbolVariant(.fill)
             .font(.system(size: 22, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(occurrence.habit.category.iconColor)
             .frame(width: 52, height: height)
-            .background(occurrence.color, in: Capsule())
+            .background(RootilandDesign.iconBackground, in: Capsule())
             .accessibilityHidden(true)
     }
 }
@@ -892,7 +897,9 @@ private struct CompletionButton: View {
         } label: {
             Image(systemName: occurrence.isCompleted ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 26, weight: .regular))
-                .foregroundStyle(occurrence.isCompleted ? Color.white : occurrence.color, occurrence.color)
+                // Checked: a dark check on the topic color. Unchecked: the deepened topic color, so pale topics still show.
+                .foregroundStyle(occurrence.isCompleted ? occurrence.habit.category.onColor : occurrence.habit.category.deepColor,
+                                 occurrence.isCompleted ? occurrence.color : occurrence.habit.category.deepColor)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

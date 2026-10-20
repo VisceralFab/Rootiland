@@ -42,7 +42,9 @@ final class RootilandStore: ObservableObject {
             habits = decoded
         }
         finishedOnboarding = defaults.bool(forKey: "finishedOnboarding")
-        accentTheme = AccentTheme(rawValue: defaults.string(forKey: "accentTheme") ?? "green") ?? .green
+        // The theme can no longer be changed in the app (Settings was removed), so everyone
+        // gets the brand green, including anyone who had chosen pink or blue before.
+        accentTheme = .green
         darkMode = defaults.bool(forKey: "darkMode")
         notificationsEnabled = defaults.bool(forKey: "notificationsEnabled")
         measurementSystem = MeasurementSystem(rawValue: defaults.string(forKey: "measurementSystem") ?? "metric") ?? .metric

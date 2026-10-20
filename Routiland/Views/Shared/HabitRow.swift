@@ -22,7 +22,8 @@ struct HabitRow: View {
         self.allowsEditing = allowsEditing
     }
 
-    private var checked: Bool { habit.isCompleted(on: completionDate ?? .now) }
+    // Completion state only appears where habits can be checked off (Track).
+    private var checked: Bool { allowsCompletion && habit.isCompleted(on: completionDate ?? .now) }
 
     @ViewBuilder
     var body: some View {
@@ -53,11 +54,12 @@ struct HabitRow: View {
 
     private var rowContent: some View {
         HStack(spacing: 14) {
+            // The habit's topic color, the same as on the Timeline and in Topics.
             Image(systemName: habit.category.symbol)
                 .font(.headline)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(habit.category.iconColor)
                 .frame(width: 40, height: 40)
-                .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                .background(RootilandDesign.iconBackground, in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 4) {
                 Text(habit.title)
                     .font(.headline)
@@ -80,10 +82,8 @@ struct HabitRow: View {
                 .overlay { ConfettiBurst(trigger: confettiTrigger, spread: 12) }
                 .sensoryFeedback(.success, trigger: confettiTrigger)
                 .accessibilityLabel(checked ? "Mark \(habit.title) incomplete" : "Complete \(habit.title)")
-            } else {
-                completionImage
-                    .accessibilityLabel(checked ? "Completed" : "Not completed")
             }
+            // Elsewhere (the topic lists) there is no circle: habits are checked off in Track and Timeline.
         }
         .padding(.vertical, 4)
     }
