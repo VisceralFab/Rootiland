@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "B9D5A5F26AD5956BC96088B2"
-               BuildableName = "Routiland.app"
-               BlueprintName = "Routiland"
-               ReferencedContainer = "container:Routiland.xcodeproj">
+               BuildableName = "Rootine.app"
+               BlueprintName = "Rootine"
+               ReferencedContainer = "container:Rootine.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B9D5A5F26AD5956BC96088B2"
-            BuildableName = "Routiland.app"
-            BlueprintName = "Routiland"
-            ReferencedContainer = "container:Routiland.xcodeproj">
+            BuildableName = "Rootine.app"
+            BlueprintName = "Rootine"
+            ReferencedContainer = "container:Rootine.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "B9D5A5F26AD5956BC96088B2"
-            BuildableName = "Routiland.app"
-            BlueprintName = "Routiland"
-            ReferencedContainer = "container:Routiland.xcodeproj">
+            BuildableName = "Rootine.app"
+            BlueprintName = "Rootine"
+            ReferencedContainer = "container:Rootine.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
