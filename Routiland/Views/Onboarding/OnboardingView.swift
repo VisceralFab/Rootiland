@@ -140,8 +140,8 @@ struct OnboardingView: View {
     private var buttonTitle: String {
         switch page {
         case .welcome: "Get Started"
-        case .summary: "Looks Good"
-        case .leafyIntro: "Start My Journey"
+        case .summary: "Finish Setup"
+        case .leafyIntro: "Continue"
         default: "Next"
         }
     }
@@ -397,7 +397,7 @@ struct OnboardingView: View {
             // The real island the user will grow, starting at level 1.
             IslandRealityView(modelName: "leafy_island", level: 1, height: 280)
             // Matches how Leafy actually grows: from fully completed days.
-            bodyText("Leafy is your personal companion. Every day you complete all of your habits, its island grows: level 2 after \(days[1]) completed days, level 3 after \(days[2]), and on up to level \(days.count).",
+            bodyText("Leafy is your personal companion. As you complete all of your habits, the island grows.",
                      font: .system(.headline, design: .rounded))
                 .padding(.horizontal, 8)
             Spacer(minLength: 12)

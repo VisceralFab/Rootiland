@@ -8,7 +8,6 @@ struct HabitTimelineView: View {
     @EnvironmentObject private var store: RootilandStore
     @State private var selectedDay = Calendar.current.startOfDay(for: .now)
     @State private var panelExpanded = false
-    @State private var panelDrag: CGFloat = 0
     @State private var headerHeight: CGFloat = 0
     @State private var showingDatePicker = false
     @State private var showingAddHabit = false
@@ -34,10 +33,6 @@ struct HabitTimelineView: View {
 
         return GeometryReader { geometry in
             let expandedHeight = max(collapsedPanelHeight, geometry.size.height - headerHeight)
-            let baseHeight = panelExpanded ? expandedHeight : collapsedPanelHeight
-            let panelHeight = min(max(baseHeight - panelDrag, collapsedPanelHeight), expandedHeight)
-            // 0 when the panel is collapsed, 1 when it fills the space below the week strip.
-            let progress = (panelHeight - collapsedPanelHeight) / max(1, expandedHeight - collapsedPanelHeight)
 
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
@@ -59,12 +54,16 @@ struct HabitTimelineView: View {
                                  select: select, open: open)
                             .padding(.horizontal, 16)
                             .padding(.bottom, collapsedPanelHeight + 12)
-                            .opacity(1 - progress)
+                            .opacity(panelExpanded ? 0 : 1)
+                            .allowsHitTesting(!panelExpanded)
                     }
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
 
-                panel(selected, now: now, height: panelHeight, progress: progress)
+                SlidingDayPanel(schedule: selected, now: now, expanded: $panelExpanded,
+                                expandedHeight: expandedHeight, collapsedHeight: collapsedPanelHeight,
+                                darkMode: store.darkMode, toggle: toggle,
+                                addHabit: { showingAddHabit = true })
             }
         }
     }
@@ -78,7 +77,10 @@ struct HabitTimelineView: View {
         return HStack(alignment: .firstTextBaseline) {
             Button { showingDatePicker = true } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(title).foregroundStyle(.primary)
+                    Text(title)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                     Text(selectedDay.formatted(.dateTime.year())).foregroundStyle(Color.accentColor)
                     Image(systemName: "chevron.right")
                         .font(.title3.weight(.bold))
@@ -129,9 +131,8 @@ struct HabitTimelineView: View {
                             .foregroundStyle(isSelected ? .white : (isToday ? Color.accentColor : .primary))
                             .frame(width: 34, height: 34)
                             .background { if isSelected { Circle().fill(Color.accentColor) } }
-                        if panelExpanded {
-                            habitDots(schedule)
-                        }
+                        habitDots(schedule)
+                            .opacity(panelExpanded ? 1 : 0)
                     }
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
@@ -165,91 +166,6 @@ struct HabitTimelineView: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: Bottom Panel
-
-    private func panel(_ schedule: DaySchedule, now: Date, height: CGFloat, progress: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            Capsule()
-                .fill(Color.secondary.opacity(0.4))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture { setPanel(expanded: !panelExpanded) }
-                .gesture(panelDragGesture)
-                .accessibilityElement()
-                .accessibilityLabel(panelExpanded ? "Collapse day" : "Expand day")
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction { setPanel(expanded: !panelExpanded) }
-
-            if panelExpanded {
-                DayAgenda(schedule: schedule, now: now, darkMode: store.darkMode,
-                          toggle: toggle, addHabit: { showingAddHabit = true })
-            } else {
-                peek(schedule, now: now)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height, alignment: .top)
-        .background(RootilandDesign.cardBackground(darkMode: store.darkMode), in: RoundedRectangle(cornerRadius: 30))
-        .clipShape(RoundedRectangle(cornerRadius: 30))
-        .shadow(color: .black.opacity(0.08), radius: 14, y: -2)
-        .padding(.horizontal, 12 * (1 - progress))
-        .padding(.bottom, 8 * (1 - progress))
-        // While collapsed the whole card can be dragged; when expanded only the grabber
-        // drags, so the agenda can scroll freely.
-        .gesture(panelDragGesture, including: panelExpanded ? .subviews : .all)
-    }
-
-    private var panelDragGesture: some Gesture {
-        DragGesture(minimumDistance: 10)
-            .onChanged { panelDrag = $0.translation.height }
-            .onEnded { value in
-                let travel = value.predictedEndTranslation.height
-                withAnimation(.smooth(duration: 0.3)) {
-                    if panelExpanded && travel > 120 {
-                        panelExpanded = false
-                    } else if !panelExpanded && travel < -80 {
-                        panelExpanded = true
-                    }
-                    panelDrag = 0
-                }
-            }
-    }
-
-    // The collapsed card shows the habit that needs attention next.
-    @ViewBuilder
-    private func peek(_ schedule: DaySchedule, now: Date) -> some View {
-        if let occurrence = schedule.focus(now: now) {
-            HStack(spacing: 14) {
-                HabitBadge(occurrence: occurrence, height: 52)
-                VStack(alignment: .leading, spacing: 2) {
-                    HabitTimeLabel(occurrence: occurrence)
-                    HabitTitle(occurrence: occurrence)
-                }
-                Spacer(minLength: 0)
-                CompletionButton(occurrence: occurrence, toggle: toggle)
-            }
-            .padding(.horizontal, 18)
-            .contentShape(Rectangle())
-            .onTapGesture { setPanel(expanded: true) }
-        } else {
-            HStack {
-                Text("No habits on this day")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Add Habit", systemImage: "plus") { showingAddHabit = true }
-                    .font(.subheadline.weight(.semibold))
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-            }
-            .padding(.horizontal, 18)
-            .frame(height: 60)
-        }
-    }
-
     // MARK: Actions
 
     private func select(_ date: Date) {
@@ -262,10 +178,7 @@ struct HabitTimelineView: View {
     }
 
     private func setPanel(expanded: Bool) {
-        withAnimation(.smooth(duration: 0.3)) {
-            panelExpanded = expanded
-            panelDrag = 0
-        }
+        withAnimation(.interactiveSpring(response: 0.35, dampingFraction: 0.88)) { panelExpanded = expanded }
     }
 
     private func shiftWeek(by weeks: Int) {
@@ -284,6 +197,123 @@ struct HabitTimelineView: View {
             .filter { $0.isScheduled(on: day) }
             .map { TimelineOccurrence(habit: $0, day: day) }
             .sorted { ($0.startMinute, $0.habit.title) < ($1.startMinute, $1.habit.title) }
+    }
+}
+
+// Keeping the drag state inside this view prevents every finger movement from
+// rebuilding the week grid behind the panel.
+private struct SlidingDayPanel: View {
+    let schedule: DaySchedule
+    let now: Date
+    @Binding var expanded: Bool
+    let expandedHeight: CGFloat
+    let collapsedHeight: CGFloat
+    let darkMode: Bool
+    let toggle: (TimelineOccurrence) -> Void
+    let addHabit: () -> Void
+
+    @State private var dragOffset: CGFloat = 0
+
+    private var height: CGFloat {
+        let base = expanded ? expandedHeight : collapsedHeight
+        return min(max(base - dragOffset, collapsedHeight), expandedHeight)
+    }
+
+    private var progress: CGFloat {
+        (height - collapsedHeight) / max(1, expandedHeight - collapsedHeight)
+    }
+
+    var body: some View {
+        let agendaOpacity = min(max((progress - 0.08) / 0.3, 0), 1)
+
+        VStack(spacing: 0) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.4))
+                .frame(width: 36, height: 5)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture { setExpanded(!expanded) }
+                .gesture(dragGesture)
+                .accessibilityElement()
+                .accessibilityLabel(expanded ? "Collapse day" : "Expand day")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { setExpanded(!expanded) }
+
+            ZStack(alignment: .top) {
+                peek
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(dragGesture)
+                    .opacity(1 - agendaOpacity)
+                    .allowsHitTesting(!expanded)
+
+                DayAgenda(schedule: schedule, now: now, darkMode: darkMode,
+                          toggle: toggle, addHabit: addHabit)
+                    .opacity(agendaOpacity)
+                    .allowsHitTesting(expanded)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: height, alignment: .top)
+        .background(RootilandDesign.cardBackground(darkMode: darkMode), in: RoundedRectangle(cornerRadius: 30))
+        .clipShape(RoundedRectangle(cornerRadius: 30))
+        .shadow(color: .black.opacity(0.08), radius: 14, y: -2)
+        .padding(.horizontal, 12 * (1 - progress))
+        .padding(.bottom, 8 * (1 - progress))
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 8)
+            .onChanged { value in dragOffset = value.translation.height }
+            .onEnded { value in
+                let range = max(1, expandedHeight - collapsedHeight)
+                let projectedHeight = (expanded ? expandedHeight : collapsedHeight)
+                    - value.predictedEndTranslation.height
+                let threshold: CGFloat = expanded ? 0.65 : 0.35
+                setExpanded((projectedHeight - collapsedHeight) / range >= threshold)
+            }
+    }
+
+    private func setExpanded(_ value: Bool) {
+        withAnimation(.interactiveSpring(response: 0.35, dampingFraction: 0.88)) {
+            expanded = value
+            dragOffset = 0
+        }
+    }
+
+    // The collapsed card shows the habit that needs attention next.
+    @ViewBuilder
+    private var peek: some View {
+        if let occurrence = schedule.focus(now: now) {
+            HStack(spacing: 14) {
+                HabitBadge(occurrence: occurrence, height: 52)
+                    .onTapGesture { setExpanded(true) }
+                VStack(alignment: .leading, spacing: 2) {
+                    HabitTimeLabel(occurrence: occurrence)
+                    HabitTitle(occurrence: occurrence)
+                }
+                .onTapGesture { setExpanded(true) }
+                Spacer(minLength: 0)
+                CompletionButton(occurrence: occurrence, toggle: toggle)
+            }
+            .padding(.horizontal, 18)
+        } else {
+            HStack {
+                Text("No habits on this day")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Add Habit", systemImage: "plus", action: addHabit)
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 60)
+        }
     }
 }
 
